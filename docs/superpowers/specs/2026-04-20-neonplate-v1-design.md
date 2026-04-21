@@ -119,7 +119,7 @@ Unique constraint: `(user_id, lower(name))`.
 | estimated_carbs_g | int | |
 | estimated_fat_g | int | |
 | times_cooked | int | default 0 |
-| last_cooked_at | timestamptz | nullable; used for suggestion exclusion list |
+| last_cooked_at | timestamptz | nullable; informational, captured for V2 preference learning |
 | created_at | timestamptz | |
 
 ### `daily_logs`
@@ -191,14 +191,21 @@ Unique constraint: `(user_id, lower(name))`.
 ### Modal A: Suggest Recipes
 
 1. User taps **Suggest [meal type]**
-2. Loading state
-3. 3 recipe cards side-by-side (tablet) or stacked (phone):
+2. Suggest screen shows:
+   - Meal type selector (breakfast / lunch / dinner / snack — defaults to time-of-day, user-overridable)
+   - **Quick options only** toggle (biases prompt toward single items / <5-min assemblies)
+   - **Suggest** button
+3. Loading state
+4. 3 suggestion cards side-by-side (tablet) or stacked (phone):
    - Name, prep time, difficulty
    - Estimated macros
    - Ingredients with ✓ (in stock) / ⚠ (missing: X)
+   - Single-item suggestions (e.g., "Banana", "Protein bar") render as the same card with 1 ingredient and empty instructions — UI handles gracefully
    - Buttons: **Cook this** / **Not this one**
-4. Cook → save to `recipes` (sets `last_cooked_at`, increments `times_cooked`) → prompt "Log now?" → verification screen pre-filled with recipe's estimated macros (still editable, e.g., for half portions) → save to `daily_logs`
-5. All three declined → shuffle re-queries with exclusions
+5. Cook → save to `recipes` (sets `last_cooked_at`, increments `times_cooked`) → prompt "Log now?" → verification screen pre-filled with estimated macros (still editable, e.g., for half portions) → save to `daily_logs`
+6. All three declined → shuffle re-queries with session-only exclusion list (declines are not persisted in V1)
+
+**No time-based recency restriction** — the same meal can be suggested on consecutive days if it fits remaining macros. `last_cooked_at` is captured for V2 preference learning but does not influence V1 suggestions.
 
 ### Modal B: Log Meal
 
@@ -237,20 +244,30 @@ Unique constraint: `(user_id, lower(name))`.
 - Inventory (array of names)
 - Meal type (from time of day, user-overridable)
 - Remaining macros (target − today's totals)
-- Exclusion list (declined recipes this session + recently-cooked recipes from last 3 days)
+- Exclusion list (declined suggestions this session only — not persisted)
+- `quick_options_only` flag (from user toggle)
 
 **System prompt (conceptual):**
 ```
-You are a recipe suggester. Given ingredients and macro targets,
-propose exactly 3 recipes for a [meal_type].
+You are a meal suggester. Given ingredients and macro targets,
+propose exactly 3 suggestions for a [meal_type].
+
+Suggestions can be:
+- Full recipes (cooked meals with ingredients + instructions)
+- Simple assemblies (<5 min prep, e.g., "yogurt + berries + granola")
+- Single items from inventory (e.g., "banana", "protein bar")
 
 Rules:
 - Use only provided ingredients plus common pantry staples
   (oil, salt, pepper, garlic, common spices) — assumed always available.
-- You MAY suggest a recipe missing up to 2 non-staple ingredients;
+- You MAY suggest items missing up to 2 non-staple ingredients;
   if so, list them in "missing_ingredients".
 - Rank suggestions to best fit the remaining macro targets.
 - Do not suggest anything in the exclusion list.
+- If quick_options_only is true: strongly prefer single items
+  or assemblies with prep_time_minutes <= 5.
+- For single items: ingredients is an array of one, instructions
+  is an empty string, prep_time_minutes is 0, difficulty is "easy".
 - Output valid JSON matching the schema.
 ```
 
@@ -407,3 +424,4 @@ Pragmatic, focused on high-ROI targets for a solo-use app.
 - Shopping list generation
 - Prompt externalization to Supabase
 - Whisper-based voice (if device STT quality disappoints)
+- Preference learning from `times_cooked`, `last_cooked_at`, and persisted decline history
