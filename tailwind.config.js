@@ -1,3 +1,5 @@
+const { colors } = require('./lib/theme');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -6,7 +8,23 @@ module.exports = {
   ],
   presets: [require('nativewind/preset')],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        background: colors.background,
+        foreground: colors.foreground,
+        muted: colors.muted,
+        'muted-foreground': colors.mutedForeground,
+        border: colors.border,
+        primary: colors.primary,
+        'primary-foreground': colors.primaryForeground,
+        accent: colors.accent,
+        'accent-foreground': colors.accentForeground,
+        destructive: colors.destructive,
+        'destructive-foreground': colors.destructiveForeground,
+        success: colors.success,
+        warning: colors.warning,
+      },
+    },
   },
   plugins: [],
 };
