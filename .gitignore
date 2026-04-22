@@ -41,3 +41,23 @@ app-example
 # generated native folders
 /ios
 /android
+
+# OpenCode skill artifacts
+.agents/
+skills-lock.json
+
+# OpenCode skill artifacts
+.agents/
+skills-lock.json
+
+# OpenCode skill artifacts
+.agents/
+skills-lock.json
+
+# OpenCode skill artifacts
+.agents/
+skills-lock.json
+
+# OpenCode skill artifacts
+.agents/
+skills-lock.json

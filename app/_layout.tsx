@@ -13,11 +13,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-    const inAuthGroup = segments[0] === '(auth)' as any;
+    const inAuthGroup = segments[0] === '(auth)';
     if (!session && !inAuthGroup) {
-      router.replace('/(auth)/sign-in' as any);
+      router.replace('/(auth)/sign-in');
     } else if (session && inAuthGroup) {
-      router.replace('/(app)/today' as any);
+      router.replace('/(app)/today');
     }
   }, [session, loading, segments, router]);
 

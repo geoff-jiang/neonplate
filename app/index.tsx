@@ -2,5 +2,5 @@
 import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return <Redirect href={'/(app)/today' as any} />;
+  return <Redirect href="/(app)/today" />;
 }
