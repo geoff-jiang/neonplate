@@ -1,26 +1,36 @@
+// app/_layout.tsx
 import '../global.css';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useAuth } from '../hooks/use-auth';
+import { View } from 'react-native';
 
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+  useEffect(() => {
+    if (loading) return;
+    const inAuthGroup = segments[0] === '(auth)' as any;
+    if (!session && !inAuthGroup) {
+      router.replace('/(auth)/sign-in' as any);
+    } else if (session && inAuthGroup) {
+      router.replace('/(app)/today' as any);
+    }
+  }, [session, loading, segments, router]);
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+  if (loading) return <View className="flex-1 bg-background" />;
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <AuthGate>
+        <Stack screenOptions={{ headerShown: false }} />
+      </AuthGate>
+    </SafeAreaProvider>
   );
 }
