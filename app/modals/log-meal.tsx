@@ -1,20 +1,19 @@
 // app/modals/log-meal.tsx
-import { View, Alert, ActivityIndicator, Pressable } from 'react-native';
+import { View, Alert, SafeAreaView } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text } from '../../components/ui/text';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
 import {
   VerificationScreen,
   VerificationResult,
 } from '../../components/logging/VerificationScreen';
+import { LogMealHeader } from '../../components/logging/LogMealHeader';
+import { LogMealTabs } from '../../components/logging/LogMealTabs';
+import { LogMealTextInput } from '../../components/logging/LogMealTextInput';
+import { LogMealVoicePlaceholder } from '../../components/logging/LogMealVoicePlaceholder';
 import { extractMeal } from '../../lib/ai/calls/extract-meal';
 import { AIError } from '../../lib/ai/client';
 import type { MealExtraction } from '../../lib/ai/schemas';
 import { useDailyLogs } from '../../hooks/use-daily-logs';
-import { cn } from '../../lib/utils/cn';
 
 type Tab = 'text' | 'voice';
 
@@ -100,70 +99,17 @@ export default function LogMeal() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="p-6 flex-1">
-        <View className="flex-row justify-between items-center mb-4">
-          <Text variant="h2">Log meal</Text>
-          <Button variant="ghost" onPress={() => router.back()}>
-            Cancel
-          </Button>
-        </View>
-
-        <View className="flex-row gap-2 mb-4">
-          <Pressable
-            onPress={() => setTab('text')}
-            className={cn(
-              'flex-1 py-3 rounded-lg border',
-              tab === 'text' ? 'bg-primary border-primary' : 'bg-background border-border',
-            )}
-          >
-            <Text
-              className={cn(
-                'text-center',
-                tab === 'text' ? 'text-primary-foreground' : 'text-foreground',
-              )}
-            >
-              Text
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setTab('voice')}
-            className={cn(
-              'flex-1 py-3 rounded-lg border',
-              tab === 'voice' ? 'bg-primary border-primary' : 'bg-background border-border',
-            )}
-          >
-            <Text
-              className={cn(
-                'text-center',
-                tab === 'voice' ? 'text-primary-foreground' : 'text-foreground',
-              )}
-            >
-              Voice
-            </Text>
-          </Pressable>
-        </View>
-
+        <LogMealHeader />
+        <LogMealTabs activeTab={tab} onChange={setTab} />
         {tab === 'text' ? (
-          <View className="flex-1">
-            <Input
-              placeholder="e.g., grilled chicken salad, 150g chicken, olive oil"
-              value={input}
-              onChangeText={setInput}
-              multiline
-              className="min-h-[120px]"
-              style={{ textAlignVertical: 'top', paddingTop: 12 }}
-            />
-            <Button
-              className="mt-4"
-              onPress={() => handleParse(input)}
-              disabled={parsing || !input.trim()}
-            >
-              {parsing ? <ActivityIndicator color="white" /> : 'Parse'}
-            </Button>
-          </View>
+          <LogMealTextInput
+            value={input}
+            onChange={setInput}
+            onParse={() => handleParse(input)}
+            parsing={parsing}
+          />
         ) : (
-          <View className="flex-1 items-center justify-center">
-            <Text variant="muted">Voice coming in Phase 4</Text>
-          </View>
+          <LogMealVoicePlaceholder />
         )}
       </View>
     </SafeAreaView>
