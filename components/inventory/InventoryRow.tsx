@@ -1,7 +1,9 @@
 // components/inventory/InventoryRow.tsx
-import { View, Alert } from 'react-native';
+import { View } from 'react-native';
+import { useState } from 'react';
 import { Text } from '../ui/text';
 import { Button } from '../ui/button';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import type { InventoryItem } from '../../lib/supabase/queries';
 
 type Props = {
@@ -10,23 +12,30 @@ type Props = {
 };
 
 export function InventoryRow({ item, onRemove }: Props) {
-  function confirmRemove() {
-    Alert.alert(
-      'Remove item?',
-      `Remove "${item.name}" from inventory?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => onRemove(item.id) },
-      ],
-    );
-  }
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
-    <View className="flex-row items-center justify-between border-b border-border py-3 px-2">
-      <Text className="flex-1">{item.name}</Text>
-      <Button variant="ghost" size="sm" onPress={confirmRemove}>
-        Remove
-      </Button>
-    </View>
+    <>
+      <View className="flex-row items-center justify-between border-b border-border py-3 px-2">
+        <Text className="flex-1">{item.name}</Text>
+        <Button variant="ghost" size="sm" onPress={() => setShowConfirm(true)}>
+          Remove
+        </Button>
+      </View>
+
+      <ConfirmDialog
+        visible={showConfirm}
+        title="Remove item?"
+        message={`Remove "${item.name}" from inventory?`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        destructive
+        onConfirm={() => {
+          onRemove(item.id);
+          setShowConfirm(false);
+        }}
+        onCancel={() => setShowConfirm(false)}
+      />
+    </>
   );
 }
