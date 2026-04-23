@@ -15,7 +15,10 @@ describe('sumMacros', () => {
       { calories: 500, protein_g: 40, carbs_g: 50, fat_g: 20 },
     ];
     expect(sumMacros(logs)).toEqual({
-      calories: 800, protein_g: 70, carbs_g: 60, fat_g: 32,
+      calories: 800,
+      protein_g: 70,
+      carbs_g: 60,
+      fat_g: 32,
     });
   });
 });
@@ -24,14 +27,20 @@ describe('remainingMacros', () => {
   it('subtracts consumed from target', () => {
     const consumed = { calories: 500, protein_g: 40, carbs_g: 60, fat_g: 15 };
     expect(remainingMacros(target, consumed)).toEqual({
-      calories: 1500, protein_g: 110, carbs_g: 140, fat_g: 50,
+      calories: 1500,
+      protein_g: 110,
+      carbs_g: 140,
+      fat_g: 50,
     });
   });
 
   it('can go negative (over target)', () => {
     const consumed = { calories: 2500, protein_g: 200, carbs_g: 250, fat_g: 80 };
     expect(remainingMacros(target, consumed)).toEqual({
-      calories: -500, protein_g: -50, carbs_g: -50, fat_g: -15,
+      calories: -500,
+      protein_g: -50,
+      carbs_g: -50,
+      fat_g: -15,
     });
   });
 });

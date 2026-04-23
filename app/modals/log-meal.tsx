@@ -63,10 +63,7 @@ export default function LogMeal() {
         Alert.alert('OpenRouter is having issues', 'Try again in a moment.');
         break;
       case 'invalid_json':
-        Alert.alert(
-          'AI returned unexpected format',
-          'Try rephrasing your meal description.',
-        );
+        Alert.alert('AI returned unexpected format', 'Try rephrasing your meal description.');
         break;
     }
   }
@@ -105,7 +102,9 @@ export default function LogMeal() {
       <View className="p-6 flex-1">
         <View className="flex-row justify-between items-center mb-4">
           <Text variant="h2">Log meal</Text>
-          <Button variant="ghost" onPress={() => router.back()}>Cancel</Button>
+          <Button variant="ghost" onPress={() => router.back()}>
+            Cancel
+          </Button>
         </View>
 
         <View className="flex-row gap-2 mb-4">

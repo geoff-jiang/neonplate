@@ -89,10 +89,7 @@ export async function chat(params: ChatParams): Promise<string> {
 }
 
 /** Parse JSON with one retry via correction prompt if the first attempt fails. */
-export async function chatJson<T>(
-  params: ChatParams,
-  parse: (raw: string) => T,
-): Promise<T> {
+export async function chatJson<T>(params: ChatParams, parse: (raw: string) => T): Promise<T> {
   let raw = await chat({ ...params, responseFormat: { type: 'json_object' } });
   try {
     return parse(raw);

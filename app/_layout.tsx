@@ -32,10 +32,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(app)" />
           <Stack.Screen name="(auth)" />
-          <Stack.Screen
-            name="modals/log-meal"
-            options={{ presentation: 'modal' }}
-          />
+          <Stack.Screen name="modals/log-meal" options={{ presentation: 'modal' }} />
         </Stack>
       </AuthGate>
     </SafeAreaProvider>

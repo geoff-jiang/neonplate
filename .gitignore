@@ -61,3 +61,5 @@ skills-lock.json
 # OpenCode skill artifacts
 .agents/
 skills-lock.json
+
+node_modules/

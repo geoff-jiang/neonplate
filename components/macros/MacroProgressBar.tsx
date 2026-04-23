@@ -21,15 +21,14 @@ export function MacroProgressBar({ label, consumed, target, unit = '' }: Props) 
       <View className="flex-row justify-between mb-1">
         <Text variant="label">{label}</Text>
         <Text variant="muted">
-          {consumed}{unit} / {target}{unit}
+          {consumed}
+          {unit} / {target}
+          {unit}
         </Text>
       </View>
       <View className="h-3 rounded-full bg-muted overflow-hidden">
         <View
-          className={cn(
-            'h-full rounded-full',
-            over ? 'bg-destructive' : 'bg-primary',
-          )}
+          className={cn('h-full rounded-full', over ? 'bg-destructive' : 'bg-primary')}
           style={{ width: `${widthPct}%` }}
         />
       </View>

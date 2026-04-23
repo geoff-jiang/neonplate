@@ -40,10 +40,7 @@ describe('groupByCategory', () => {
   });
 
   it('sorts items alphabetically within a category', () => {
-    const items = [
-      item('Zucchini', 'produce'),
-      item('Apple', 'produce'),
-    ];
+    const items = [item('Zucchini', 'produce'), item('Apple', 'produce')];
     const groups = groupByCategory(items);
     expect(groups[0].items.map((i) => i.name)).toEqual(['Apple', 'Zucchini']);
   });

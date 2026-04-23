@@ -21,9 +21,7 @@ const textVariants = cva('text-foreground', {
 
 type Props = TextProps & VariantProps<typeof textVariants> & { className?: string };
 
-export const Text = forwardRef<RNText, Props>(
-  ({ variant, className, ...props }, ref) => {
-    return <RNText ref={ref} className={cn(textVariants({ variant }), className)} {...props} />;
-  },
-);
+export const Text = forwardRef<RNText, Props>(({ variant, className, ...props }, ref) => {
+  return <RNText ref={ref} className={cn(textVariants({ variant }), className)} {...props} />;
+});
 Text.displayName = 'Text';

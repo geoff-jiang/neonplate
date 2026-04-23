@@ -29,7 +29,9 @@ export function ConfirmDialog({
     <Modal visible={visible} transparent animationType="fade">
       <View className="flex-1 items-center justify-center bg-black/50">
         <Card className="w-80">
-          <Text variant="h3" className="mb-2">{title}</Text>
+          <Text variant="h3" className="mb-2">
+            {title}
+          </Text>
           <Text className="mb-6">{message}</Text>
           <View className="flex-row gap-3">
             <Button variant="outline" className="flex-1" onPress={onCancel}>

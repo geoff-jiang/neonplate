@@ -1,8 +1,6 @@
 // tests/unit/prompts.test.ts
 import { describe, it, expect } from 'vitest';
-import {
-  buildMealExtractionPrompt,
-} from '../../lib/ai/prompts';
+import { buildMealExtractionPrompt } from '../../lib/ai/prompts';
 
 describe('buildMealExtractionPrompt', () => {
   it('includes the raw user input', () => {

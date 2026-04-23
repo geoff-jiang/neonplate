@@ -22,11 +22,7 @@ export const inventoryQueries = {
       name: name.trim(),
       category,
     };
-    const { data, error } = await supabase
-      .from('inventory_items')
-      .insert(insert)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('inventory_items').insert(insert).select().single();
     if (error) throw error;
     return data;
   },
@@ -65,11 +61,7 @@ export const dailyLogQueries = {
   },
 
   async insert(log: DailyLogInsert): Promise<DailyLog> {
-    const { data, error } = await supabase
-      .from('daily_logs')
-      .insert(log)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('daily_logs').insert(log).select().single();
     if (error) throw error;
     return data;
   },

@@ -1,32 +1,29 @@
 // components/ui/button.tsx
-import { Pressable, Text, type PressableProps } from 'react-native';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../lib/utils/cn';
 import { forwardRef } from 'react';
+import { Pressable, Text, type PressableProps } from 'react-native';
+import { cn } from '../../lib/utils/cn';
 
-const buttonVariants = cva(
-  'flex-row items-center justify-center rounded-lg',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary',
-        destructive: 'bg-destructive',
-        outline: 'border border-border bg-background',
-        ghost: 'bg-transparent',
-      },
-      size: {
-        default: 'h-12 px-4',
-        sm: 'h-10 px-3',
-        lg: 'h-14 px-6',
-        icon: 'h-12 w-12',
-      },
+const buttonVariants = cva('flex-row items-center justify-center rounded-lg', {
+  variants: {
+    variant: {
+      default: 'bg-primary',
+      destructive: 'bg-destructive',
+      outline: 'border border-border bg-background',
+      ghost: 'bg-transparent',
     },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
+    size: {
+      default: 'h-12 px-4',
+      sm: 'h-10 px-3',
+      lg: 'h-14 px-6',
+      icon: 'h-12 w-12',
     },
   },
-);
+  defaultVariants: {
+    variant: 'default',
+    size: 'default',
+  },
+});
 
 const textVariants = cva('text-base font-medium', {
   variants: {
@@ -49,16 +46,13 @@ type ButtonProps = PressableProps &
 export const Button = forwardRef<React.ComponentRef<typeof Pressable>, ButtonProps>(
   ({ variant, size, className, children, ...props }, ref) => {
     return (
-      <Pressable
-        ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
-        {...props}
-      >
-        {typeof children === 'string' ? (
+      <Pressable ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props}>
+        {/* {typeof children === 'string' ? (
           <Text className={textVariants({ variant })}>{children}</Text>
         ) : (
           children
-        )}
+        )} */}
+        <Text className={textVariants({ variant })}>{children}</Text>
       </Pressable>
     );
   },

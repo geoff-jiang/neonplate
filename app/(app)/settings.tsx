@@ -6,10 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { useSettings, UserSettings } from '../../hooks/use-settings';
 import { useAuth } from '../../hooks/use-auth';
-import {
-  getOpenRouterKey,
-  setOpenRouterKey,
-} from '../../lib/auth/secure-storage';
+import { getOpenRouterKey, setOpenRouterKey } from '../../lib/auth/secure-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Settings() {
@@ -48,7 +45,9 @@ export default function Settings() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1 p-6" contentContainerClassName="gap-4">
-        <Text variant="h2" className="mb-2">Daily Macro Targets</Text>
+        <Text variant="h2" className="mb-2">
+          Daily Macro Targets
+        </Text>
 
         <View>
           <Text variant="label">Calories</Text>
@@ -83,7 +82,9 @@ export default function Settings() {
           />
         </View>
 
-        <Text variant="h2" className="mb-2 mt-6">OpenRouter API Key</Text>
+        <Text variant="h2" className="mb-2 mt-6">
+          OpenRouter API Key
+        </Text>
         <Input
           placeholder="sk-or-..."
           value={apiKey}

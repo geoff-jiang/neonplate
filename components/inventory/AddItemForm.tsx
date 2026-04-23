@@ -38,10 +38,14 @@ export function AddItemForm({ visible, onClose, onAdd }: Props) {
       <View className="flex-1 bg-background p-6">
         <View className="flex-row items-center justify-between mb-6">
           <Text variant="h2">Add ingredient</Text>
-          <Button variant="ghost" onPress={onClose}>Cancel</Button>
+          <Button variant="ghost" onPress={onClose}>
+            Cancel
+          </Button>
         </View>
 
-        <Text variant="label" className="mb-2">Name</Text>
+        <Text variant="label" className="mb-2">
+          Name
+        </Text>
         <Input
           placeholder="e.g., chicken breast"
           value={name}
@@ -51,7 +55,9 @@ export function AddItemForm({ visible, onClose, onAdd }: Props) {
           className="mb-4"
         />
 
-        <Text variant="label" className="mb-2">Category</Text>
+        <Text variant="label" className="mb-2">
+          Category
+        </Text>
         <View className="flex-row flex-wrap gap-2 mb-6">
           {CATEGORY_ORDER.map((c) => (
             <Pressable
@@ -59,9 +65,7 @@ export function AddItemForm({ visible, onClose, onAdd }: Props) {
               onPress={() => setCategory(c)}
               className={cn(
                 'px-4 py-2 rounded-full border',
-                category === c
-                  ? 'bg-primary border-primary'
-                  : 'bg-background border-border',
+                category === c ? 'bg-primary border-primary' : 'bg-background border-border',
               )}
             >
               <Text className={category === c ? 'text-primary-foreground' : 'text-foreground'}>

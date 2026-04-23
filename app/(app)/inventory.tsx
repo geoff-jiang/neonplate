@@ -85,11 +85,7 @@ export default function Inventory() {
         </ScrollView>
       )}
 
-      <AddItemForm
-        visible={addOpen}
-        onClose={() => setAddOpen(false)}
-        onAdd={add}
-      />
+      <AddItemForm visible={addOpen} onClose={() => setAddOpen(false)} onAdd={add} />
     </SafeAreaView>
   );
 }

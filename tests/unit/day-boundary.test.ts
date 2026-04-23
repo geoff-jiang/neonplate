@@ -1,10 +1,6 @@
 // tests/unit/day-boundary.test.ts
 import { describe, it, expect } from 'vitest';
-import {
-  startOfLocalDay,
-  endOfLocalDay,
-  belongsToDay,
-} from '../../lib/utils/day-boundary';
+import { startOfLocalDay, endOfLocalDay, belongsToDay } from '../../lib/utils/day-boundary';
 
 describe('startOfLocalDay', () => {
   it('returns midnight of the same date', () => {

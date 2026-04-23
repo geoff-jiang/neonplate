@@ -53,16 +53,19 @@ export function useInventory() {
     [user],
   );
 
-  const remove = useCallback(async (id: string) => {
-    const snapshot = items;
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    try {
-      await inventoryQueries.remove(id);
-    } catch (e) {
-      setItems(snapshot);
-      throw e;
-    }
-  }, [items]);
+  const remove = useCallback(
+    async (id: string) => {
+      const snapshot = items;
+      setItems((prev) => prev.filter((i) => i.id !== id));
+      try {
+        await inventoryQueries.remove(id);
+      } catch (e) {
+        setItems(snapshot);
+        throw e;
+      }
+    },
+    [items],
+  );
 
   return { items, loading, error, add, remove, reload };
 }

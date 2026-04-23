@@ -33,16 +33,26 @@ describe('MealExtractionSchema', () => {
 
   it('rejects invalid confidence values', () => {
     const invalid = {
-      name: 'X', calories: 100, protein_g: 5, carbs_g: 10, fat_g: 2,
-      confidence: 'certain', notes: '',
+      name: 'X',
+      calories: 100,
+      protein_g: 5,
+      carbs_g: 10,
+      fat_g: 2,
+      confidence: 'certain',
+      notes: '',
     };
     expect(() => MealExtractionSchema.parse(invalid)).toThrow();
   });
 
   it('rejects negative calories', () => {
     const invalid = {
-      name: 'X', calories: -10, protein_g: 5, carbs_g: 10, fat_g: 2,
-      confidence: 'low', notes: '',
+      name: 'X',
+      calories: -10,
+      protein_g: 5,
+      carbs_g: 10,
+      fat_g: 2,
+      confidence: 'low',
+      notes: '',
     };
     expect(() => MealExtractionSchema.parse(invalid)).toThrow();
   });
@@ -107,10 +117,17 @@ describe('SuggestionsSchema', () => {
     const invalid = {
       suggestions: [
         {
-          name: 'X', meal_type: 'lunch', prep_time_minutes: 5,
-          difficulty: 'impossible', ingredients: [], missing_ingredients: [],
-          instructions: '', estimated_calories: 100, estimated_protein_g: 5,
-          estimated_carbs_g: 10, estimated_fat_g: 2,
+          name: 'X',
+          meal_type: 'lunch',
+          prep_time_minutes: 5,
+          difficulty: 'impossible',
+          ingredients: [],
+          missing_ingredients: [],
+          instructions: '',
+          estimated_calories: 100,
+          estimated_protein_g: 5,
+          estimated_carbs_g: 10,
+          estimated_fat_g: 2,
         },
       ],
     };

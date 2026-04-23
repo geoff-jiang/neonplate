@@ -81,16 +81,15 @@ export function VerificationScreen({
       ) : null}
 
       <View>
-        <Text variant="label">Confidence: <Text className={confidenceColor}>{extraction.confidence}</Text></Text>
+        <Text variant="label">
+          Confidence: <Text className={confidenceColor}>{extraction.confidence}</Text>
+        </Text>
         {extraction.notes ? <Text variant="caption">{extraction.notes}</Text> : null}
       </View>
 
       <View>
         <Text variant="label">Meal name</Text>
-        <Input
-          value={draft.name}
-          onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))}
-        />
+        <Input value={draft.name} onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))} />
       </View>
 
       <View className="flex-row gap-3">
@@ -118,16 +117,8 @@ export function VerificationScreen({
       {onReparse ? (
         <View>
           <Text variant="label">Re-parse with hint</Text>
-          <Input
-            placeholder="e.g., it was 2 servings, not 1"
-            value={hint}
-            onChangeText={setHint}
-          />
-          <Button
-            variant="outline"
-            className="mt-2"
-            onPress={() => onReparse(hint)}
-          >
+          <Input placeholder="e.g., it was 2 servings, not 1" value={hint} onChangeText={setHint} />
+          <Button variant="outline" className="mt-2" onPress={() => onReparse(hint)}>
             Re-parse
           </Button>
         </View>

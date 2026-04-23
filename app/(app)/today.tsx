@@ -28,20 +28,20 @@ export default function Today() {
   const mealType = mealTypeFromNow();
 
   async function handleDelete(id: string, name: string) {
-    Alert.alert(
-      'Delete meal?',
-      `Remove "${name}" from today's log?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try { await remove(id); } catch (e) { Alert.alert('Failed', String(e)); }
-          },
+    Alert.alert('Delete meal?', `Remove "${name}" from today's log?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await remove(id);
+          } catch (e) {
+            Alert.alert('Failed', String(e));
+          }
         },
-      ],
-    );
+      },
+    ]);
   }
 
   const Header = (
@@ -55,7 +55,9 @@ export default function Today() {
 
   const Macros = (
     <Card className="m-6 mt-0">
-      <Text variant="h3" className="mb-4">Macros</Text>
+      <Text variant="h3" className="mb-4">
+        Macros
+      </Text>
       <MacroProgressBar
         label="Calories"
         consumed={consumed.calories}
@@ -99,7 +101,9 @@ export default function Today() {
 
   const MealsList = (
     <View className="px-6 pb-6">
-      <Text variant="h3" className="mb-2">Today's meals</Text>
+      <Text variant="h3" className="mb-2">
+        Today's meals
+      </Text>
       {logs.length === 0 ? (
         <Text variant="muted">No meals logged yet today.</Text>
       ) : (
@@ -112,11 +116,7 @@ export default function Today() {
                   {log.calories} kcal · {log.protein_g}p · {log.carbs_g}c · {log.fat_g}f
                 </Text>
               </View>
-              <Button
-                variant="ghost"
-                size="sm"
-                onPress={() => handleDelete(log.id, log.name)}
-              >
+              <Button variant="ghost" size="sm" onPress={() => handleDelete(log.id, log.name)}>
                 Delete
               </Button>
             </View>

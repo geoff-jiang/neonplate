@@ -62,29 +62,33 @@ export function useDailyLogs(day: Date = new Date()) {
     [user],
   );
 
-  const update = useCallback(async (id: string, patch: Partial<DailyLogInsert>) => {
-    const snapshot = logs;
-    setLogs((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, ...patch } as DailyLog : l)),
-    );
-    try {
-      await dailyLogQueries.update(id, patch);
-    } catch (e) {
-      setLogs(snapshot);
-      throw e;
-    }
-  }, [logs]);
+  const update = useCallback(
+    async (id: string, patch: Partial<DailyLogInsert>) => {
+      const snapshot = logs;
+      setLogs((prev) => prev.map((l) => (l.id === id ? ({ ...l, ...patch } as DailyLog) : l)));
+      try {
+        await dailyLogQueries.update(id, patch);
+      } catch (e) {
+        setLogs(snapshot);
+        throw e;
+      }
+    },
+    [logs],
+  );
 
-  const remove = useCallback(async (id: string) => {
-    const snapshot = logs;
-    setLogs((prev) => prev.filter((l) => l.id !== id));
-    try {
-      await dailyLogQueries.remove(id);
-    } catch (e) {
-      setLogs(snapshot);
-      throw e;
-    }
-  }, [logs]);
+  const remove = useCallback(
+    async (id: string) => {
+      const snapshot = logs;
+      setLogs((prev) => prev.filter((l) => l.id !== id));
+      try {
+        await dailyLogQueries.remove(id);
+      } catch (e) {
+        setLogs(snapshot);
+        throw e;
+      }
+    },
+    [logs],
+  );
 
   return { logs, loading, error, add, update, remove, reload };
 }
