@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
+import { MacroField } from '../../components/settings/MacroField';
 import { useSettings, UserSettings } from '../../hooks/use-settings';
 import { useAuth } from '../../hooks/use-auth';
 import { getOpenRouterKey, setOpenRouterKey } from '../../lib/auth/secure-storage';
@@ -49,38 +50,26 @@ export default function Settings() {
           Daily Macro Targets
         </Text>
 
-        <View>
-          <Text variant="label">Calories</Text>
-          <Input
-            keyboardType="number-pad"
-            value={String(draft.daily_calories)}
-            onChangeText={(v) => updateField('daily_calories', v)}
-          />
-        </View>
-        <View>
-          <Text variant="label">Protein (g)</Text>
-          <Input
-            keyboardType="number-pad"
-            value={String(draft.daily_protein_g)}
-            onChangeText={(v) => updateField('daily_protein_g', v)}
-          />
-        </View>
-        <View>
-          <Text variant="label">Carbs (g)</Text>
-          <Input
-            keyboardType="number-pad"
-            value={String(draft.daily_carbs_g)}
-            onChangeText={(v) => updateField('daily_carbs_g', v)}
-          />
-        </View>
-        <View>
-          <Text variant="label">Fat (g)</Text>
-          <Input
-            keyboardType="number-pad"
-            value={String(draft.daily_fat_g)}
-            onChangeText={(v) => updateField('daily_fat_g', v)}
-          />
-        </View>
+        <MacroField
+          label="Calories"
+          value={String(draft.daily_calories)}
+          onChange={(v) => updateField('daily_calories', v)}
+        />
+        <MacroField
+          label="Protein (g)"
+          value={String(draft.daily_protein_g)}
+          onChange={(v) => updateField('daily_protein_g', v)}
+        />
+        <MacroField
+          label="Carbs (g)"
+          value={String(draft.daily_carbs_g)}
+          onChange={(v) => updateField('daily_carbs_g', v)}
+        />
+        <MacroField
+          label="Fat (g)"
+          value={String(draft.daily_fat_g)}
+          onChange={(v) => updateField('daily_fat_g', v)}
+        />
 
         <Text variant="h2" className="mb-2 mt-6">
           OpenRouter API Key
