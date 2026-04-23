@@ -1,7 +1,8 @@
 // app/modals/log-meal.tsx
-import { View, Alert, SafeAreaView } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   VerificationScreen,
   VerificationResult,
@@ -84,7 +85,7 @@ export default function LogMeal() {
 
   if (extraction) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
+      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
         <VerificationScreen
           extraction={extraction}
           rawInput={rawInput}
@@ -97,8 +98,8 @@ export default function LogMeal() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="p-6 flex-1">
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
+      <View className="flex-1 p-6">
         <LogMealHeader />
         <LogMealTabs activeTab={tab} onChange={setTab} />
         {tab === 'text' ? (

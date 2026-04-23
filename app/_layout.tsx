@@ -1,10 +1,10 @@
 // app/_layout.tsx
-import '../global.css';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useAuth } from '../hooks/use-auth';
 import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import '../global.css';
+import { useAuth } from '../hooks/use-auth';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -32,7 +32,10 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(app)" />
           <Stack.Screen name="(auth)" />
-          <Stack.Screen name="modals/log-meal" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="modals/log-meal"
+            options={{ presentation: 'modal', gestureEnabled: false }}
+          />
         </Stack>
       </AuthGate>
     </SafeAreaProvider>
