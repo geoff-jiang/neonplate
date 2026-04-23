@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 
 export type SpeechState = 'idle' | 'listening' | 'error';
 

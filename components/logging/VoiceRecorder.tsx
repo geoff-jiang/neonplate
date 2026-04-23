@@ -11,8 +11,7 @@ type Props = {
 };
 
 export function VoiceRecorder({ onParse, parsing }: Props) {
-  const { state, transcript, setTranscript, error, start, stop } =
-    useSpeechRecognition();
+  const { state, transcript, setTranscript, error, start, stop } = useSpeechRecognition();
 
   const listening = state === 'listening';
 
@@ -26,20 +25,18 @@ export function VoiceRecorder({ onParse, parsing }: Props) {
             listening ? 'bg-destructive' : 'bg-primary',
           )}
         >
-          <Text className="text-primary-foreground text-3xl">
-            {listening ? '■' : '●'}
-          </Text>
+          <Text className="text-primary-foreground text-3xl">{listening ? '■' : '●'}</Text>
         </Pressable>
         <Text variant="muted" className="mt-3">
           {listening ? 'Listening... tap to stop' : 'Tap to start recording'}
         </Text>
       </View>
 
-      {error ? (
-        <Text className="text-destructive mb-3">{error}</Text>
-      ) : null}
+      {error ? <Text className="text-destructive mb-3">{error}</Text> : null}
 
-      <Text variant="label" className="mb-2">Transcription (editable)</Text>
+      <Text variant="label" className="mb-2">
+        Transcription (editable)
+      </Text>
       <Input
         value={transcript}
         onChangeText={setTranscript}
