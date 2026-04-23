@@ -13,6 +13,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.geoffjiang.neonplate',
+    infoPlist: {
+      NSMicrophoneUsageDescription: 'NeonPlate needs your microphone to log meals via voice.',
+      NSSpeechRecognitionUsageDescription: 'NeonPlate uses speech recognition to transcribe meal descriptions.',
+    },
   },
   android: {
     adaptiveIcon: {
@@ -33,6 +37,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-router',
     'expo-secure-store',
+    [
+      'expo-speech-recognition',
+      {
+        microphonePermission: 'NeonPlate needs your microphone to log meals via voice.',
+        speechRecognitionPermission: 'NeonPlate uses speech recognition to transcribe your meal descriptions.',
+      },
+    ],
     [
       'expo-splash-screen',
       {
