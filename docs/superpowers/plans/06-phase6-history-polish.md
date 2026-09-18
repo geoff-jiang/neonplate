@@ -1,5 +1,7 @@
 # Phase 6 — History + Polish
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 **Goal:** Build the history tab, fill in any missing error/loading/empty states, refine prompts from real usage, and ship V1.
 
 **Exit criteria:** V1 is dogfoodable without friction. You've been using it daily for a week.

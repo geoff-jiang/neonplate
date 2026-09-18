@@ -1,5 +1,7 @@
 # Phase 2 — Inventory
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 **Goal:** Fully functional inventory management: add items with categories, view grouped list, delete, responsive layout (grid on tablet, list on phone).
 
 **Exit criteria:** You can add, view, and delete inventory items on both iPad and iPhone simulators. Items persist across app restarts.

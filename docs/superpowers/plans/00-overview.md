@@ -1,5 +1,7 @@
 # NeonPlate V1 Implementation Plan — Overview
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a tablet-first, mobile-compatible React Native app (NeonPlate V1) that manages household food inventory, suggests recipes via LLM, logs meals via voice/text with manual macro verification, and tracks daily macro progress.

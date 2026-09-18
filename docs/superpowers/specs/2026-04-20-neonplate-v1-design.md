@@ -1,5 +1,7 @@
 # NeonPlate V1 — Design Spec
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 **Status:** V1.0 design locked, ready for implementation planning
 **Date:** 2026-04-20
 

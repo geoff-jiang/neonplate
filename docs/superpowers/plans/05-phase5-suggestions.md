@@ -1,5 +1,7 @@
 # Phase 5 — Recipe Suggestions
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 **Goal:** Full suggestion loop — AI generates 3 suggestions (recipes, assemblies, or single items) based on inventory + remaining macros + meal type + optional quick-options toggle. "Cook this" saves to recipes table and optionally logs. Recipes tab shows saved library.
 
 **Exit criteria:** You can get 3 suggestions on demand, mark one as cooked, see it in your Recipes tab, and log it to Today. "Quick options only" toggle works. Cook-again from recipes tab works.

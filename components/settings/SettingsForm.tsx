@@ -1,0 +1,76 @@
+// components/settings/SettingsForm.tsx
+import { View } from 'react-native';
+import { Text } from '../ui/text';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { MacroField } from './MacroField';
+import type { UserSettings } from '../../hooks/use-settings';
+
+type Props = {
+  draft: UserSettings;
+  apiKey: string;
+  saving: boolean;
+  onUpdateField: (field: keyof UserSettings, value: string) => void;
+  onApiKeyChange: (value: string) => void;
+  onSave: () => void;
+  onSignOut: () => void;
+};
+
+export function SettingsForm({
+  draft,
+  apiKey,
+  saving,
+  onUpdateField,
+  onApiKeyChange,
+  onSave,
+  onSignOut,
+}: Props) {
+  return (
+    <View className="gap-4">
+      <Text variant="h2" className="mb-2">
+        Daily Macro Targets
+      </Text>
+
+      <MacroField
+        label="Calories"
+        value={String(draft.daily_calories)}
+        onChange={(v) => onUpdateField('daily_calories', v)}
+      />
+      <MacroField
+        label="Protein (g)"
+        value={String(draft.daily_protein_g)}
+        onChange={(v) => onUpdateField('daily_protein_g', v)}
+      />
+      <MacroField
+        label="Carbs (g)"
+        value={String(draft.daily_carbs_g)}
+        onChange={(v) => onUpdateField('daily_carbs_g', v)}
+      />
+      <MacroField
+        label="Fat (g)"
+        value={String(draft.daily_fat_g)}
+        onChange={(v) => onUpdateField('daily_fat_g', v)}
+      />
+
+      <Text variant="h2" className="mb-2 mt-6">
+        OpenRouter API Key
+      </Text>
+      <Input
+        placeholder="sk-or-..."
+        value={apiKey}
+        onChangeText={onApiKeyChange}
+        secureTextEntry
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      <Text variant="caption">Stored securely on-device only.</Text>
+
+      <Button onPress={onSave} disabled={saving} className="mt-6">
+        {saving ? 'Saving...' : 'Save'}
+      </Button>
+      <Button variant="outline" onPress={onSignOut} className="mt-2">
+        Sign out
+      </Button>
+    </View>
+  );
+}
