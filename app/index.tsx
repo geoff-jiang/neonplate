@@ -1,6 +1,8 @@
 // app/index.tsx
 import { Redirect } from 'expo-router';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function Index() {
-  return <Redirect href="/(app)/today" />;
+  const { session } = useAuth();
+  return <Redirect href={session ? '/(app)/today' : '/(auth)/sign-in'} />;
 }

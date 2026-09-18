@@ -1,6 +1,6 @@
 # Personal V1 completion plan
 
-Updated: 2026-09-17. This document is the source of truth; it supersedes the historical plans in `docs/superpowers/`.
+Updated: 2026-09-18. This document is the source of truth; it supersedes the historical plans in `docs/superpowers/`.
 
 ## Goal and agreed decisions
 
@@ -20,18 +20,18 @@ Make NeonPlate reliable enough for daily personal use on iPad and iPhone:
 
 ## Current state
 
-The April implementation was on `origin/v1-implementation` at `6d27e41`; main originally held only plans. The September cleanup integrates that work, removes unused starter code, updates working agreements, and makes this plan authoritative. It does not implement the remaining features.
+The April implementation was on `origin/v1-implementation` at `6d27e41`; main originally held only plans. The September cleanup integrates that work, removes unused starter code, updates working agreements, and makes this plan authoritative. Stage 1 foundation changes are now implemented; stages 2–5 remain.
 
 | Area | Evidence in code | Remaining work |
 | --- | --- | --- |
-| Foundation | Expo routes, theme, responsive layouts, Supabase migrations and policies | Native dependency/build checks, reliable auth/session lifecycle, real-device setup |
-| Settings | Targets and secure API-key storage | Validation, error handling, refresh Today after changes |
+| Foundation | Shared auth, callback handling, protected routes, compatible Expo packages, ownership migration/tests | Native build, live backend and real-device verification (deferred) |
+| Settings | Targets/key storage, errors/retry, cross-screen refresh | Input validation and final device verification |
 | Inventory | Categorized listing and add/remove | Persistent in-stock toggle, rename/category editing, failure feedback |
-| Meal logging | AI text extraction, editable verification, saves, deletion, Today totals | Manual entry, meal editing, refresh correctness, validation and retry behavior |
+| Meal logging | AI extraction, verification, saves/deletes, guarded submissions, synchronized totals | Manual entry, meal editing, re-parse draft correctness, validation and AI retries |
 | Voice | Speech hook and recorder connected to extraction | Physical-device permissions, lifecycle and transcription verification |
 | Suggestions | Response schema and an unfinished navigation action | Suggestion prompt/request, screen, exclusions, selection and log flow |
 | Recipes / history | Tables and placeholder screens | Minimal usable views and reuse flow |
-| Verification | 30 unit tests, typecheck, CI workflow | Regression coverage, database isolation checks, device smoke tests |
+| Verification | Automated auth/data/UI regressions and PostgreSQL ownership checks, typecheck, CI | Remaining-feature regression tests and final device/live-backend checks |
 
 Baseline review: 30 tests and typecheck passed; lint had two JSX escaping errors and three unused imports, corrected during cleanup. No hosted database, native build, or end-to-end device behavior was verified in this repository review.
 
@@ -39,20 +39,30 @@ Cleanup validation (2026-09-17): frozen-lockfile installation with pnpm 9.15.9, 
 
 ## 1. Stabilize the existing foundation
 
+**Implementation and automated review complete.** Native/device and live-backend validation is deferred by user decision (2026-09-18) until all five stages are implemented. The backend was probably local; no NeonPlate hosted project or local credentials have been recovered. Do not create or reuse a hosted project without resolving that setup.
+
 Work from main in a short-lived branch. Keep runtime fixes separate from the documentation/cleanup integration.
 
-- [ ] Install from the pinned lockfile; check Expo package compatibility and run a native development build. Resolve compatibility findings deliberately, without a wholesale SDK upgrade unless needed.
-- [ ] Pick and verify the existing development/hosted Supabase project and personal-device build/distribution route. Record setup steps and required redirect URLs in README, without credentials. Do not create replacement infrastructure until existing setup is checked.
-- [ ] Complete magic-link callback handling for both cold starts and an already-open app. Verify session restore and sign-out. Remove redundant sign-in modes only after the chosen path works.
-- [ ] Give auth one shared owner rather than each consumer creating another session subscription.
-- [ ] Fix `useDailyLogs`' unstable default Date dependency, which retriggers loading after renders. Use stable day boundaries and explicitly refresh on local midnight and app foreground.
-- [ ] Choose one small data-refresh strategy for Today, settings, and logging. Start with shared auth plus explicit screen-focus/mutation refresh; add a query cache only if that materially simplifies the code.
-- [ ] Ensure save/delete/target changes refresh visible totals and list data without reopening the app. Clear user-scoped state on sign-out.
-- [ ] Expose loading and failure states; do not silently swallow failed deletes or settings reads. Prevent duplicate submissions and stale request results.
-- [ ] Disable unfinished navigation actions until their destination exists.
-- [ ] Test database ownership isolation with two test users across all four tables, including inserts, updates, and recipe/log associations. Verify deleting a recipe preserves its meal logs.
+- [x] Align dependencies within Expo SDK 54 and verify package compatibility (18/18 Expo doctor checks). Export an iOS JavaScript bundle.
+- [ ] Run a native development build at final device validation. The JS bundle export does not establish native build readiness.
+- [x] Inspect existing infrastructure and document local Supabase setup and native Auth redirect URLs without credentials. Connected hosted projects are unrelated and unchanged.
+- [ ] Recover/start the selected backend and choose the personal-device install route at final validation; likely local Supabase, per user.
+- [x] Implement cold/warm magic-link callbacks, shared session restore/sign-out, and protected navigation. Add callback/session race tests; retain password fallback until device validation.
+- [x] Give auth one shared owner rather than each consumer creating another session subscription.
+- [x] Fix `useDailyLogs`' unstable default Date dependency, which retriggers loading after renders. Use stable day boundaries and explicitly refresh on local midnight and app foreground.
+- [x] Choose one small data-refresh strategy for Today, settings, and logging. Start with shared auth plus explicit screen-focus/mutation refresh; add a query cache only if that materially simplifies the code.
+- [x] Ensure save/delete/target changes refresh visible totals and list data without reopening the app. Clear user-scoped state on sign-out.
+- [x] Expose loading and failure states; do not silently swallow failed deletes or settings reads. Prevent duplicate submissions and stale request results.
+- [x] Disable unfinished navigation actions until their destination exists.
+- [x] Test database ownership isolation with two test users across all four tables, including inserts, updates, and recipe/log associations. Verify deleting a recipe preserves its meal logs.
 
-**Exit:** sign in on both device sizes, save targets and key, add/delete a meal, and see consistent totals with no request loop. Refresh, midnight rollover, sign-out, and failed requests behave predictably. Unit/static checks pass; database and device results are recorded.
+**Implementation evidence:** shared user-scoped mutation notifications replace independent stale screen state; tests cover stable dates, midnight/foreground refresh, account changes during requests, settings refresh, failures/retries, and duplicate writes. A new migration enforces same-owner recipe/log associations and preserves historical logs. Eighteen PGlite integration tests exercise PostgreSQL RLS, grants, migration upgrades, and delete preservation with synthetic users; live Supabase Auth/PostgREST is not covered.
+
+**Checkpoint review:** subagent implementation/self-review plus an independent read-only review. Findings addressed include loaded lists unmounting during background refresh (which lost open delete dialogs), missing legacy-key fallback when the optional publishable-key field is blank, and save/cancel navigation races. Automated regression coverage accompanies these fixes.
+
+**Checkpoint checks (2026-09-18):** 86 tests pass across 12 files, including 18 PostgreSQL integration tests. Typecheck, lint, formatting, Expo compatibility checks (doctor 18/18), and a final iOS Metro/Hermes export pass. Subagents completed implementation/self-review; a separate read-only review and parent review found no remaining Stage 1 code blockers. No native application was compiled or installed, and no live backend was changed.
+
+**Final validation exit (deferred):** sign in on both device sizes, save targets/key, add/delete meals, and see consistent totals with no request loop. Confirm native permissions, live backend behavior, midnight/foreground transitions, and account sign-out.
 
 ## 2. Finish dependable logging
 
@@ -67,7 +77,7 @@ This makes the app useful before the suggestion feature is completed.
 - [ ] Verify voice on a physical device: permission allowed/denied, start/stop, editing transcript, leaving the screen while recording, retry, and correct source on save. Clean up recording on unmount.
 - [ ] Add focused regression tests for validation, extraction parsing, and date/totals behavior; manually exercise the full text/manual/voice flows.
 
-**Exit:** a meal can be added, corrected, and deleted even when AI is unavailable (with database connectivity). Use logging for two or three days and resolve blocking friction before expanding scope.
+**Implementation exit:** logging can be added, corrected, and deleted without AI; verify with automated tests and checkpoint review. The original two-to-three-day dogfood gate is deferred to final device validation per user.
 
 ## 3. Make inventory persistent and useful
 
@@ -123,6 +133,6 @@ Cyberpunk redesign/animations, public distribution and onboarding, multi-user sh
 
 ## Execution order and reporting
 
-Complete milestones 1–5 in order, using small reviewed commits and updating this checklist with evidence. Estimate each milestone after the foundation runs on an actual device; the original eight-to-twelve-day estimate is not a reliable remaining-work estimate.
+Complete milestones 1–5 in order, using small reviewed commits and updating this checklist with evidence. Delegate independent tasks to subagents, review every checkpoint, and check in with the user after each stage before starting the next. Continue automated checks throughout; defer native builds, physical-device tests, live-backend validation, and dogfooding to the final validation phase, as requested. Do not call the app release-ready until that validation passes. Estimate each milestone after the foundation runs on an actual device; the original eight-to-twelve-day estimate is not a reliable remaining-work estimate.
 
-No unresolved product decision blocks this plan. Infrastructure availability and physical-device/build access must be checked at milestone 1 before choosing or creating a release setup. Ask if those checks reveal a choice requiring a new account, paid service, replacement database, or broader product scope.
+No unresolved product decision blocks this plan. Infrastructure discovery found a likely local setup but no recovered NeonPlate credentials. Resolve live-backend and physical-device/build access at final validation before choosing or creating a release setup. Ask if those checks reveal a choice requiring a new account, paid service, replacement database, or broader product scope.

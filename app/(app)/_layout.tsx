@@ -14,8 +14,8 @@ export default function AppLayout() {
     >
       <Tabs.Screen name="today" options={{ title: 'Today' }} />
       <Tabs.Screen name="inventory" options={{ title: 'Inventory' }} />
-      <Tabs.Screen name="recipes" options={{ title: 'Recipes' }} />
-      <Tabs.Screen name="history" options={{ title: 'History' }} />
+      <Tabs.Screen name="recipes" options={{ title: 'Recipes', href: null }} />
+      <Tabs.Screen name="history" options={{ title: 'History', href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );

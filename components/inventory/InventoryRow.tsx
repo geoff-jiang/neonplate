@@ -1,5 +1,5 @@
 // components/inventory/InventoryRow.tsx
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useState } from 'react';
 import { Text } from '../ui/text';
 import { Button } from '../ui/button';
@@ -8,11 +8,26 @@ import type { InventoryItem } from '../../lib/supabase/queries';
 
 type Props = {
   item: InventoryItem;
-  onRemove: (id: string) => void;
+  onRemove: (id: string) => Promise<void>;
 };
 
 export function InventoryRow({ item, onRemove }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const [busy, setBusy] = useState(false);
+
+  async function handleRemove() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await onRemove(item.id);
+      setShowConfirm(false);
+    } catch (error) {
+      Alert.alert('Remove failed', error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <>
@@ -30,10 +45,8 @@ export function InventoryRow({ item, onRemove }: Props) {
         confirmText="Remove"
         cancelText="Cancel"
         destructive
-        onConfirm={() => {
-          onRemove(item.id);
-          setShowConfirm(false);
-        }}
+        busy={busy}
+        onConfirm={handleRemove}
         onCancel={() => setShowConfirm(false)}
       />
     </>

@@ -27,8 +27,14 @@ export const inventoryQueries = {
     return data;
   },
 
-  async remove(id: string): Promise<void> {
-    const { error } = await supabase.from('inventory_items').delete().eq('id', id);
+  async remove(id: string, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('inventory_items')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select('id')
+      .single();
     if (error) throw error;
   },
 };
@@ -66,19 +72,57 @@ export const dailyLogQueries = {
     return data;
   },
 
-  async update(id: string, patch: Partial<DailyLogInsert>): Promise<DailyLog> {
+  async update(
+    id: string,
+    patch: Partial<Omit<DailyLogInsert, 'user_id' | 'id'>>,
+    userId: string,
+  ): Promise<DailyLog> {
     const { data, error } = await supabase
       .from('daily_logs')
       .update(patch)
       .eq('id', id)
+      .eq('user_id', userId)
       .select()
       .single();
     if (error) throw error;
     return data;
   },
 
-  async remove(id: string): Promise<void> {
-    const { error } = await supabase.from('daily_logs').delete().eq('id', id);
+  async remove(id: string, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('daily_logs')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select('id')
+      .single();
+    if (error) throw error;
+  },
+};
+
+export type UserSettings = Pick<
+  Database['public']['Tables']['user_settings']['Row'],
+  'daily_calories' | 'daily_protein_g' | 'daily_carbs_g' | 'daily_fat_g'
+>;
+
+export const settingsQueries = {
+  async get(userId: string): Promise<UserSettings> {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('daily_calories, daily_protein_g, daily_carbs_g, daily_fat_g')
+      .eq('user_id', userId)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async save(userId: string, updates: UserSettings): Promise<void> {
+    const { error } = await supabase
+      .from('user_settings')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .select('user_id')
+      .single();
     if (error) throw error;
   },
 };

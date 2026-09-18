@@ -18,7 +18,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 type Props = {
   groups: Group[];
-  onRemove: (id: string) => void;
+  onRemove: (id: string) => Promise<void>;
   isTablet: boolean;
 };
 

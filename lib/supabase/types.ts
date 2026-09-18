@@ -70,11 +70,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'daily_logs_recipe_id_fkey';
-            columns: ['recipe_id'];
+            foreignKeyName: 'daily_logs_user_id_recipe_id_fkey';
+            columns: ['user_id', 'recipe_id'];
             isOneToOne: false;
             referencedRelation: 'recipes';
-            referencedColumns: ['id'];
+            referencedColumns: ['user_id', 'id'];
           },
         ];
       };

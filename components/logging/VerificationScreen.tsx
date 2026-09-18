@@ -1,6 +1,6 @@
 // components/logging/VerificationScreen.tsx
 import { View, ScrollView, Alert } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text } from '../ui/text';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -39,11 +39,24 @@ export function VerificationScreen({
   });
   const [saving, setSaving] = useState(false);
   const [hint, setHint] = useState('');
+  const [reparsing, setReparsing] = useState(false);
+  const inFlight = useRef(false);
+  const mounted = useRef(true);
+  const busy = saving || reparsing;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   function intField(field: keyof Omit<VerificationResult, 'name'>) {
     return {
       value: String(draft[field]),
+      editable: !busy,
       onChangeText: (v: string) => {
+        if (inFlight.current) return;
         const n = parseInt(v, 10);
         setDraft((d) => ({ ...d, [field]: Number.isFinite(n) ? n : 0 }));
       },
@@ -52,14 +65,35 @@ export function VerificationScreen({
   }
 
   async function handleSave() {
+    if (inFlight.current || !mounted.current) return;
+    inFlight.current = true;
     setSaving(true);
     try {
       await onConfirm(draft);
     } catch (e) {
-      Alert.alert('Save failed', String(e));
+      if (mounted.current) Alert.alert('Save failed', String(e));
     } finally {
-      setSaving(false);
+      inFlight.current = false;
+      if (mounted.current) setSaving(false);
     }
+  }
+
+  async function handleReparse() {
+    if (inFlight.current || !mounted.current || !onReparse) return;
+    inFlight.current = true;
+    setReparsing(true);
+    try {
+      await onReparse(hint);
+    } catch (error) {
+      if (mounted.current) Alert.alert('Failed to parse', String(error));
+    } finally {
+      inFlight.current = false;
+      if (mounted.current) setReparsing(false);
+    }
+  }
+
+  function handleCancel() {
+    if (!inFlight.current && mounted.current) onCancel();
   }
 
   const confidenceColor =
@@ -89,7 +123,13 @@ export function VerificationScreen({
 
       <View>
         <Text variant="label">Meal name</Text>
-        <Input value={draft.name} onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))} />
+        <Input
+          value={draft.name}
+          editable={!busy}
+          onChangeText={(v) => {
+            if (!inFlight.current) setDraft((d) => ({ ...d, name: v }));
+          }}
+        />
       </View>
 
       <View className="flex-row gap-3">
@@ -117,18 +157,25 @@ export function VerificationScreen({
       {onReparse ? (
         <View>
           <Text variant="label">Re-parse with hint</Text>
-          <Input placeholder="e.g., it was 2 servings, not 1" value={hint} onChangeText={setHint} />
-          <Button variant="outline" className="mt-2" onPress={() => onReparse(hint)}>
-            Re-parse
+          <Input
+            placeholder="e.g., it was 2 servings, not 1"
+            value={hint}
+            editable={!busy}
+            onChangeText={(value) => {
+              if (!inFlight.current) setHint(value);
+            }}
+          />
+          <Button variant="outline" className="mt-2" onPress={handleReparse} disabled={busy}>
+            {reparsing ? 'Parsing...' : 'Re-parse'}
           </Button>
         </View>
       ) : null}
 
       <View className="flex-row gap-3 mt-4">
-        <Button variant="outline" className="flex-1" onPress={onCancel}>
+        <Button variant="outline" className="flex-1" onPress={handleCancel} disabled={busy}>
           Cancel
         </Button>
-        <Button className="flex-1" onPress={handleSave} disabled={saving}>
+        <Button className="flex-1" onPress={handleSave} disabled={busy}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </View>
