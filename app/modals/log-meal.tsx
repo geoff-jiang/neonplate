@@ -48,17 +48,23 @@ export default function LogMeal() {
   function handleAIError(e: AIError) {
     switch (e.kind) {
       case 'no_key':
-        Alert.alert('API key missing', 'Add your OpenRouter key in Settings.'); break;
+        Alert.alert('API key missing', 'Add your OpenRouter key in Settings.');
+        break;
       case 'network':
-        Alert.alert('No connection', 'Check your network and try again.'); break;
+        Alert.alert('No connection', 'Check your network and try again.');
+        break;
       case 'timeout':
-        Alert.alert('AI is slow', 'Request timed out. Try again.'); break;
+        Alert.alert('AI is slow', 'Request timed out. Try again.');
+        break;
       case 'http_4xx':
-        Alert.alert('AI unavailable', `Check your API key.\n\n${e.message}`); break;
+        Alert.alert('AI unavailable', `Check your API key.\n\n${e.message}`);
+        break;
       case 'http_5xx':
-        Alert.alert('OpenRouter is having issues', 'Try again in a moment.'); break;
+        Alert.alert('OpenRouter is having issues', 'Try again in a moment.');
+        break;
       case 'invalid_json':
-        Alert.alert('AI returned unexpected format', 'Try rephrasing your meal.'); break;
+        Alert.alert('AI returned unexpected format', 'Try rephrasing your meal.');
+        break;
     }
   }
 
@@ -96,7 +102,9 @@ export default function LogMeal() {
       <View className="p-6 flex-1">
         <View className="flex-row justify-between items-center mb-4">
           <Text variant="h2">Log meal</Text>
-          <Button variant="ghost" onPress={() => router.back()}>Cancel</Button>
+          <Button variant="ghost" onPress={() => router.back()}>
+            Cancel
+          </Button>
         </View>
 
         <View className="flex-row gap-2 mb-4">
@@ -107,7 +115,12 @@ export default function LogMeal() {
               tab === 'text' ? 'bg-primary border-primary' : 'bg-background border-border',
             )}
           >
-            <Text className={cn('text-center', tab === 'text' ? 'text-primary-foreground' : 'text-foreground')}>
+            <Text
+              className={cn(
+                'text-center',
+                tab === 'text' ? 'text-primary-foreground' : 'text-foreground',
+              )}
+            >
               Text
             </Text>
           </Pressable>
@@ -118,7 +131,12 @@ export default function LogMeal() {
               tab === 'voice' ? 'bg-primary border-primary' : 'bg-background border-border',
             )}
           >
-            <Text className={cn('text-center', tab === 'voice' ? 'text-primary-foreground' : 'text-foreground')}>
+            <Text
+              className={cn(
+                'text-center',
+                tab === 'voice' ? 'text-primary-foreground' : 'text-foreground',
+              )}
+            >
               Voice
             </Text>
           </Pressable>
@@ -143,10 +161,7 @@ export default function LogMeal() {
             </Button>
           </View>
         ) : (
-          <VoiceRecorder
-            onParse={(text) => handleParse(text, 'voice')}
-            parsing={parsing}
-          />
+          <VoiceRecorder onParse={(text) => handleParse(text, 'voice')} parsing={parsing} />
         )}
       </View>
     </SafeAreaView>

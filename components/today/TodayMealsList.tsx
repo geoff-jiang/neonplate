@@ -27,7 +27,7 @@ export function TodayMealsList({ logs, onRemove }: Props) {
   return (
     <View className="px-6 pb-6">
       <Text variant="h3" className="mb-2">
-        Today's meals
+        Today&apos;s meals
       </Text>
       {logs.length === 0 ? (
         <Text variant="muted">No meals logged yet today.</Text>

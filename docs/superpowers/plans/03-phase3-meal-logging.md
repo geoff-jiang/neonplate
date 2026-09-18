@@ -1,5 +1,7 @@
 # Phase 3 — Text Meal Logging
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 **Goal:** End-to-end text-based meal logging: type or paste a meal description → AI extracts macros → user verifies/edits → save to daily_logs. Today screen shows live macro progress and today's meal list.
 
 **Exit criteria:** You can log 5+ meals via text on device, see macros update live, edit them from the verification screen, and trust the numbers. Dogfood this for 2-3 days before moving to Phase 4.

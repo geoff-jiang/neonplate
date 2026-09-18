@@ -1,24 +1,25 @@
-# NeonPlate — Agent Rules
+# NeonPlate — working agreements
 
-## Styling
-- **Zero inline `style={{}}`** except for dynamic runtime values that cannot be expressed as Tailwind classes (e.g., animated `width` percentages).
-- All colors, spacing, typography, and radii must come from `lib/theme.ts` tokens or NativeWind classes mapped to them.
-- V2 will swap `lib/theme.ts` for a cyberpunk theme — no component code should reference hex values directly.
+## Scope and source of truth
 
-## Components
-- Screens import UI primitives from `components/ui/*`, NOT directly from `react-native`.
-- `components/ui/` is the single chokepoint for visual redesign. Never bypass it.
-- **Use `ConfirmDialog` from `components/ui/ConfirmDialog` instead of `Alert.alert`.** The native alert cannot be styled and will break the V2 redesign. Use `Alert.alert` ONLY for system-level errors where a custom dialog is impractical (e.g., network unreachable, app crash recovery).
-- Extract sub-components when a file exceeds ~150 lines or contains multiple logical sections (headers, lists, forms, etc.).
-- Each file should have one clear responsibility. If a screen file grows unwieldy, extract reusable sections into `components/<feature>/` files.
+- Build a personal iPad/iPhone app. Read `docs/PLAN.md` for current scope, status, and acceptance criteria.
+- `docs/superpowers/` contains historical designs and implementation examples, not an executable current checklist. The current plan takes precedence.
+- Finish the daily-use loop before visual redesign or new product scope.
 
-## Code Quality
-- **Run `pnpm format` before every commit.** Prettier is configured for the project.
-- Follow TDD for pure functions (prompts, schemas, utilities). Skip UI/E2E tests in V1.
-- Use `forwardRef` on all UI primitive wrappers.
-- Use `displayName` on all forwardRef components.
+## Implementation
 
-## Architecture
-- Supabase queries live in `lib/supabase/queries.ts`. Hooks import from there.
-- AI calls are structured as: `config.ts` → `prompts.ts` → `schemas.ts` → `calls/*.ts` → `client.ts`.
-- No custom server. Client-direct to Supabase and OpenRouter.
+- Keep Expo + TypeScript + Supabase + OpenRouter; no custom server for personal V1.
+- Keep database queries in `lib/supabase/queries.ts` and AI requests in `lib/ai/`.
+- Use existing `components/ui/` primitives and `lib/theme.ts` where useful. Native layout components, native alerts, and justified inline styles are allowed.
+- Extract components for reuse or clarity, not to satisfy a line limit. Do not add abstractions solely for a future redesign.
+- Keep auth and fetched data consistent between screens; avoid independent copies without a refresh strategy.
+- Treat AI nutrition as estimates. Require editable confirmation and keep manual entry available.
+- Never commit credentials or real meal data. Keep database changes in versioned migrations; do not rewrite migrations that may already be applied.
+
+## Validation and commits
+
+- Use the pnpm version pinned in `package.json`; Node 22 is the CI baseline.
+- Run `pnpm format` before commits that touch app code.
+- Run `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, and `pnpm test` before merging.
+- Add meaningful tests for changed logic and regressions. Device smoke tests cover native interactions; do not treat unit checks as proof of device readiness.
+- Update `docs/PLAN.md` when a milestone is completed, recording what was actually verified.

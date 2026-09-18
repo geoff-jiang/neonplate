@@ -1,5 +1,5 @@
 // components/ui/ConfirmDialog.tsx
-import { View, Modal, Pressable } from 'react-native';
+import { View, Modal } from 'react-native';
 import { Text } from './text';
 import { Button } from './button';
 import { Card } from './card';

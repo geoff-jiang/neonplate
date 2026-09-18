@@ -1,5 +1,7 @@
 # Phase 4 — Voice Logging
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 **Goal:** Hook voice input into the existing meal logging flow using device-native speech-to-text.
 
 **Exit criteria:** You can tap the mic button on the Voice tab, speak a meal description, see the transcription appear, edit it if needed, and have it flow through the same parse → verify → save pipeline.

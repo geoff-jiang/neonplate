@@ -1,5 +1,4 @@
 // components/today/TodayMacros.tsx
-import { View } from 'react-native';
 import { Card } from '../ui/card';
 import { Text } from '../ui/text';
 import { MacroProgressBar } from '../macros/MacroProgressBar';

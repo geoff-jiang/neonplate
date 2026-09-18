@@ -1,5 +1,7 @@
 # Phase 1 — Foundation
 
+> Historical reference. See [the current personal V1 plan](../../PLAN.md) for authoritative scope, progress, and remaining work.
+
 **Goal:** Project scaffolded, Supabase running locally with schema + RLS, magic-link auth works on iPad and iPhone, settings screen saves macro targets and OpenRouter API key.
 
 **Exit criteria:** You can sign in on both an iPad simulator and an iPhone simulator, set macro targets that persist, and save an OpenRouter API key to secure storage.

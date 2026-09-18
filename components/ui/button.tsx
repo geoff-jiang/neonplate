@@ -47,11 +47,6 @@ export const Button = forwardRef<React.ComponentRef<typeof Pressable>, ButtonPro
   ({ variant, size, className, children, ...props }, ref) => {
     return (
       <Pressable ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props}>
-        {/* {typeof children === 'string' ? (
-          <Text className={textVariants({ variant })}>{children}</Text>
-        ) : (
-          children
-        )} */}
         <Text className={textVariants({ variant })}>{children}</Text>
       </Pressable>
     );

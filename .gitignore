@@ -42,24 +42,11 @@ app-example
 /ios
 /android
 
-# OpenCode skill artifacts
+# Local agent artifacts
 .agents/
 skills-lock.json
 
-# OpenCode skill artifacts
-.agents/
-skills-lock.json
-
-# OpenCode skill artifacts
-.agents/
-skills-lock.json
-
-# OpenCode skill artifacts
-.agents/
-skills-lock.json
-
-# OpenCode skill artifacts
-.agents/
-skills-lock.json
-
-node_modules/
+# Environment files (keep the template)
+.env
+.env.*
+!.env.example

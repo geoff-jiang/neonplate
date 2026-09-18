@@ -1,7 +1,6 @@
 // components/today/TodayActions.tsx
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Text } from '../ui/text';
 import { Button } from '../ui/button';
 
 function mealTypeFromNow(now: Date = new Date()): 'breakfast' | 'lunch' | 'dinner' | 'snack' {
