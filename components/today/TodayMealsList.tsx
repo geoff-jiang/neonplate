@@ -1,5 +1,5 @@
 // components/today/TodayMealsList.tsx
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useState } from 'react';
 import { Text } from '../ui/text';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -14,14 +14,19 @@ type Props = {
 export function TodayMealsList({ logs, onRemove }: Props) {
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null);
 
+  const [busy, setBusy] = useState(false);
+
   async function handleDelete() {
-    if (!deleting) return;
+    if (!deleting || busy) return;
+    setBusy(true);
     try {
       await onRemove(deleting.id);
-    } catch {
-      // Error handled by parent hook
+      setDeleting(null);
+    } catch (error) {
+      Alert.alert('Delete failed', error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
     }
-    setDeleting(null);
   }
 
   return (
@@ -52,6 +57,7 @@ export function TodayMealsList({ logs, onRemove }: Props) {
         message={`Remove "${deleting?.name}" from today's log?`}
         confirmText="Delete"
         destructive
+        busy={busy}
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
       />

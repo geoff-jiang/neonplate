@@ -1,6 +1,8 @@
 // app/(auth)/sign-in.tsx
 import { View, Alert } from 'react-native';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { AUTH_REDIRECT_URL } from '@/lib/auth/callback';
 import { supabase } from '../../lib/supabase/client';
 import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
@@ -14,34 +16,38 @@ export default function SignIn() {
   const [sent, setSent] = useState(false);
   const [mode, setMode] = useState<'link' | 'password'>('link');
 
-  async function handleSendLink() {
-    if (!email) return;
-    setSending(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: 'neonplate://' },
-    });
-    setSending(false);
-    if (error) {
-      Alert.alert('Sign-in failed', error.message);
-      return;
-    }
-    setSent(true);
-  }
+  const requestInFlight = useRef(false);
+  const { error: authError, clearError, processingLink } = useAuth();
 
-  async function handlePasswordSignIn() {
-    if (!email || !password) return;
-    setSending(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setSending(false);
-    if (error) {
-      Alert.alert('Sign-in failed', error.message);
+  async function submit() {
+    if (requestInFlight.current || processingLink) return;
+    const normalizedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      Alert.alert('Check your email', 'Enter a valid email address.');
       return;
     }
-    // Auth gate will redirect to app on session change
+    requestInFlight.current = true;
+    setSending(true);
+    clearError();
+    try {
+      const { error } =
+        mode === 'link'
+          ? await supabase.auth.signInWithOtp({
+              email: normalizedEmail,
+              options: { emailRedirectTo: AUTH_REDIRECT_URL },
+            })
+          : await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+      if (error) throw error;
+      if (mode === 'link') setSent(true);
+    } catch (error) {
+      Alert.alert(
+        'Sign-in failed',
+        error instanceof Error ? error.message : 'Check your connection and try again.',
+      );
+    } finally {
+      requestInFlight.current = false;
+      setSending(false);
+    }
   }
 
   return (
@@ -55,16 +61,24 @@ export default function SignIn() {
             {mode === 'link' ? 'Sign in with a magic link' : 'Sign in with email + password'}
           </Text>
 
+          {authError && <Text className="mb-4 text-destructive">{authError}</Text>}
+          {processingLink && <Text className="mb-4">Finishing sign-in...</Text>}
           {sent ? (
-            <Text className="text-center">
-              Check your inbox for a sign-in link sent to {email}.
-            </Text>
+            <View className="gap-4">
+              <Text className="text-center">
+                Check your inbox for a sign-in link sent to {email.trim()}. Open it on this device.
+              </Text>
+              <Button variant="outline" onPress={() => setSent(false)} disabled={processingLink}>
+                Use another email or resend
+              </Button>
+            </View>
           ) : (
             <>
               <Input
                 placeholder="you@example.com"
                 value={email}
                 onChangeText={setEmail}
+                editable={!sending && !processingLink}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -75,6 +89,7 @@ export default function SignIn() {
                   placeholder="Password"
                   value={password}
                   onChangeText={setPassword}
+                  editable={!sending && !processingLink}
                   secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -82,16 +97,20 @@ export default function SignIn() {
                 />
               )}
               {mode === 'password' ? (
-                <Button onPress={handlePasswordSignIn} disabled={sending || !email || !password}>
+                <Button
+                  onPress={submit}
+                  disabled={sending || processingLink || !email || !password}
+                >
                   {sending ? 'Signing in...' : 'Sign in'}
                 </Button>
               ) : (
-                <Button onPress={handleSendLink} disabled={sending || !email}>
+                <Button onPress={submit} disabled={sending || processingLink || !email}>
                   {sending ? 'Sending...' : 'Send magic link'}
                 </Button>
               )}
               <Button
                 variant="ghost"
+                disabled={sending || processingLink}
                 className="mt-2"
                 onPress={() => setMode(mode === 'link' ? 'password' : 'link')}
               >

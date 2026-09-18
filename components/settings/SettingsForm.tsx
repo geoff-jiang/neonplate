@@ -10,6 +10,7 @@ type Props = {
   draft: UserSettings;
   apiKey: string;
   saving: boolean;
+  disabled?: boolean;
   onUpdateField: (field: keyof UserSettings, value: string) => void;
   onApiKeyChange: (value: string) => void;
   onSave: () => void;
@@ -20,6 +21,7 @@ export function SettingsForm({
   draft,
   apiKey,
   saving,
+  disabled = false,
   onUpdateField,
   onApiKeyChange,
   onSave,
@@ -32,21 +34,25 @@ export function SettingsForm({
       </Text>
 
       <MacroField
+        editable={!saving && !disabled}
         label="Calories"
         value={String(draft.daily_calories)}
         onChange={(v) => onUpdateField('daily_calories', v)}
       />
       <MacroField
+        editable={!saving && !disabled}
         label="Protein (g)"
         value={String(draft.daily_protein_g)}
         onChange={(v) => onUpdateField('daily_protein_g', v)}
       />
       <MacroField
+        editable={!saving && !disabled}
         label="Carbs (g)"
         value={String(draft.daily_carbs_g)}
         onChange={(v) => onUpdateField('daily_carbs_g', v)}
       />
       <MacroField
+        editable={!saving && !disabled}
         label="Fat (g)"
         value={String(draft.daily_fat_g)}
         onChange={(v) => onUpdateField('daily_fat_g', v)}
@@ -56,6 +62,7 @@ export function SettingsForm({
         OpenRouter API Key
       </Text>
       <Input
+        editable={!saving && !disabled}
         placeholder="sk-or-..."
         value={apiKey}
         onChangeText={onApiKeyChange}
@@ -65,10 +72,10 @@ export function SettingsForm({
       />
       <Text variant="caption">Stored securely on-device only.</Text>
 
-      <Button onPress={onSave} disabled={saving} className="mt-6">
+      <Button onPress={onSave} disabled={saving || disabled} className="mt-6">
         {saving ? 'Saving...' : 'Save'}
       </Button>
-      <Button variant="outline" onPress={onSignOut} className="mt-2">
+      <Button variant="outline" onPress={onSignOut} disabled={saving} className="mt-2">
         Sign out
       </Button>
     </View>

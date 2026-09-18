@@ -1,6 +1,6 @@
 // app/modals/log-meal.tsx
 import { View, Alert, ActivityIndicator, Pressable } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../../components/ui/text';
@@ -28,20 +28,40 @@ export default function LogMeal() {
   const [rawInput, setRawInput] = useState('');
   const [source, setSource] = useState<'text' | 'voice'>('text');
   const { add } = useDailyLogs();
+  const mounted = useRef(true);
+  const inFlight = useRef<'parse' | 'save' | null>(null);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  function dismiss() {
+    if (inFlight.current === 'save' || !mounted.current) return;
+    mounted.current = false;
+    router.back();
+  }
 
   async function handleParse(text: string, tabSource: 'text' | 'voice', hint?: string) {
+    if (inFlight.current || !mounted.current) return;
+    inFlight.current = 'parse';
     const combined = hint ? `${text}\n\nHint from user: ${hint}` : text;
     setParsing(true);
     try {
       const result = await extractMeal(combined);
+      if (!mounted.current) return;
       setExtraction(result);
       setRawInput(text);
       setSource(tabSource);
     } catch (e) {
+      if (!mounted.current) return;
       if (e instanceof AIError) handleAIError(e);
       else Alert.alert('Failed to parse', String(e));
     } finally {
-      setParsing(false);
+      inFlight.current = null;
+      if (mounted.current) setParsing(false);
     }
   }
 
@@ -69,18 +89,27 @@ export default function LogMeal() {
   }
 
   async function handleConfirm(result: VerificationResult) {
-    await add({
-      recipe_id: null,
-      name: result.name,
-      calories: result.calories,
-      protein_g: result.protein_g,
-      carbs_g: result.carbs_g,
-      fat_g: result.fat_g,
-      logged_at: new Date().toISOString(),
-      source,
-      raw_input: rawInput,
-    });
-    router.back();
+    if (inFlight.current || !mounted.current) return;
+    inFlight.current = 'save';
+    try {
+      await add({
+        recipe_id: null,
+        name: result.name,
+        calories: result.calories,
+        protein_g: result.protein_g,
+        carbs_g: result.carbs_g,
+        fat_g: result.fat_g,
+        logged_at: new Date().toISOString(),
+        source,
+        raw_input: rawInput,
+      });
+      if (mounted.current) {
+        mounted.current = false;
+        router.back();
+      }
+    } finally {
+      inFlight.current = null;
+    }
   }
 
   if (extraction) {
@@ -91,7 +120,9 @@ export default function LogMeal() {
           rawInput={rawInput}
           onConfirm={handleConfirm}
           onReparse={(hint) => handleParse(rawInput, source, hint)}
-          onCancel={() => setExtraction(null)}
+          onCancel={() => {
+            if (!inFlight.current && mounted.current) setExtraction(null);
+          }}
         />
       </SafeAreaView>
     );
@@ -102,13 +133,14 @@ export default function LogMeal() {
       <View className="p-6 flex-1">
         <View className="flex-row justify-between items-center mb-4">
           <Text variant="h2">Log meal</Text>
-          <Button variant="ghost" onPress={() => router.back()}>
+          <Button variant="ghost" onPress={dismiss}>
             Cancel
           </Button>
         </View>
 
         <View className="flex-row gap-2 mb-4">
           <Pressable
+            disabled={parsing}
             onPress={() => setTab('text')}
             className={cn(
               'flex-1 py-3 rounded-lg border',
@@ -125,6 +157,7 @@ export default function LogMeal() {
             </Text>
           </Pressable>
           <Pressable
+            disabled={parsing}
             onPress={() => setTab('voice')}
             className={cn(
               'flex-1 py-3 rounded-lg border',
@@ -147,6 +180,7 @@ export default function LogMeal() {
             <Input
               placeholder="e.g., grilled chicken salad, 150g chicken, olive oil"
               value={input}
+              editable={!parsing}
               onChangeText={setInput}
               multiline
               className="min-h-[120px]"

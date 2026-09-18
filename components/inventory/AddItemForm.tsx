@@ -10,7 +10,7 @@ import { cn } from '../../lib/utils/cn';
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onAdd: (name: string, category: Category) => Promise<void>;
+  onAdd: (name: string, category: Category) => Promise<unknown>;
 };
 
 export function AddItemForm({ visible, onClose, onAdd }: Props) {
@@ -19,7 +19,7 @@ export function AddItemForm({ visible, onClose, onAdd }: Props) {
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit() {
-    if (!name.trim()) return;
+    if (saving || !name.trim()) return;
     setSaving(true);
     try {
       await onAdd(name.trim(), category);
@@ -34,11 +34,18 @@ export function AddItemForm({ visible, onClose, onAdd }: Props) {
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={() => {
+        if (!saving) onClose();
+      }}
+    >
       <View className="flex-1 bg-background p-6">
         <View className="flex-row items-center justify-between mb-6">
           <Text variant="h2">Add ingredient</Text>
-          <Button variant="ghost" onPress={onClose}>
+          <Button variant="ghost" onPress={onClose} disabled={saving}>
             Cancel
           </Button>
         </View>
