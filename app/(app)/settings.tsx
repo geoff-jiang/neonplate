@@ -3,24 +3,38 @@ import { useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SettingsForm } from '../../components/settings/SettingsForm';
 import { LoadStatus } from '../../components/ui/load-status';
-import { useSettings, UserSettings } from '../../hooks/use-settings';
+import { useSettings } from '../../hooks/use-settings';
 import { useAuth } from '../../hooks/use-auth';
+import {
+  targetsToDraft,
+  parseTargetDraft,
+  type TargetDraft,
+} from '../../lib/utils/meal-validation';
 import { getOpenRouterKey, setOpenRouterKey } from '../../lib/auth/secure-storage';
 
 export default function Settings() {
   const { settings, save, loading, error, reload } = useSettings();
   const { signOut } = useAuth();
-  const [draft, setDraft] = useState<UserSettings>(settings);
+  const [draft, setDraft] = useState(() => targetsToDraft(settings));
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);
   const [keyLoading, setKeyLoading] = useState(true);
   const [keyAttempt, setKeyAttempt] = useState(0);
   const [keyError, setKeyError] = useState<Error | null>(null);
   const dirty = useRef(false);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const submitting = useRef(false);
 
   useEffect(() => {
-    if (!dirty.current) setDraft(settings);
+    if (!dirty.current) setDraft(targetsToDraft(settings));
   }, [settings]);
 
   useEffect(() => {
@@ -44,18 +58,27 @@ export default function Settings() {
 
   async function handleSave() {
     if (submitting.current || loading || keyLoading || error || keyError) return;
+    let values;
+    try {
+      values = parseTargetDraft(draft);
+    } catch (cause) {
+      setValidationError(cause instanceof Error ? cause.message : 'Check your daily targets.');
+      return;
+    }
+    setValidationError(null);
     submitting.current = true;
     setSaving(true);
     try {
       if (apiKey) await setOpenRouterKey(apiKey);
-      await save(draft);
+      await save(values);
       dirty.current = false;
-      Alert.alert('Saved');
+      if (mounted.current) Alert.alert('Saved');
     } catch (cause) {
-      Alert.alert('Save failed', cause instanceof Error ? cause.message : String(cause));
+      if (mounted.current)
+        Alert.alert('Save failed', cause instanceof Error ? cause.message : String(cause));
     } finally {
       submitting.current = false;
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   }
 
@@ -66,17 +89,19 @@ export default function Settings() {
     try {
       await signOut();
     } catch (cause) {
-      Alert.alert('Sign-out failed', cause instanceof Error ? cause.message : String(cause));
+      if (mounted.current)
+        Alert.alert('Sign-out failed', cause instanceof Error ? cause.message : String(cause));
     } finally {
       submitting.current = false;
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   }
 
-  function updateField(field: keyof UserSettings, value: string) {
+  function updateField(field: keyof TargetDraft, value: string) {
+    if (submitting.current) return;
     dirty.current = true;
-    const n = parseInt(value, 10);
-    setDraft((previous) => ({ ...previous, [field]: Number.isFinite(n) ? n : 0 }));
+    setValidationError(null);
+    setDraft((previous) => ({ ...previous, [field]: value }));
   }
 
   return (
@@ -93,11 +118,14 @@ export default function Settings() {
         />
         <SettingsForm
           draft={draft}
+          validationError={validationError}
           apiKey={apiKey}
           saving={saving}
           disabled={loading || keyLoading || !!error || !!keyError}
           onUpdateField={updateField}
-          onApiKeyChange={setApiKey}
+          onApiKeyChange={(value) => {
+            if (!submitting.current) setApiKey(value);
+          }}
           onSave={handleSave}
           onSignOut={handleSignOut}
         />

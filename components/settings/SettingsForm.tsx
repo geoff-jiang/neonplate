@@ -4,14 +4,15 @@ import { Text } from '../ui/text';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { MacroField } from './MacroField';
-import type { UserSettings } from '../../hooks/use-settings';
+import type { TargetDraft } from '../../lib/utils/meal-validation';
 
 type Props = {
-  draft: UserSettings;
+  draft: TargetDraft;
   apiKey: string;
   saving: boolean;
   disabled?: boolean;
-  onUpdateField: (field: keyof UserSettings, value: string) => void;
+  validationError?: string | null;
+  onUpdateField: (field: keyof TargetDraft, value: string) => void;
   onApiKeyChange: (value: string) => void;
   onSave: () => void;
   onSignOut: () => void;
@@ -22,6 +23,7 @@ export function SettingsForm({
   apiKey,
   saving,
   disabled = false,
+  validationError,
   onUpdateField,
   onApiKeyChange,
   onSave,
@@ -71,6 +73,12 @@ export function SettingsForm({
         autoCorrect={false}
       />
       <Text variant="caption">Stored securely on-device only.</Text>
+
+      {validationError && (
+        <Text accessibilityRole="alert" className="text-destructive">
+          {validationError}
+        </Text>
+      )}
 
       <Button onPress={onSave} disabled={saving || disabled} className="mt-6">
         {saving ? 'Saving...' : 'Save'}

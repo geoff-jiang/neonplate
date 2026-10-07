@@ -1,11 +1,15 @@
 // lib/ai/schemas.ts
 import { z } from 'zod';
+import { MAX_DATABASE_INTEGER } from '../utils/meal-validation';
 
-const intFromNumber = z.number().transform((n) => Math.round(n));
-const nonNegativeInt = intFromNumber.refine((n) => n >= 0, 'Must be >= 0');
+const nonNegativeInt = z
+  .number()
+  .nonnegative()
+  .max(MAX_DATABASE_INTEGER)
+  .transform((n) => Math.round(n));
 
 export const MealExtractionSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   calories: nonNegativeInt,
   protein_g: nonNegativeInt,
   carbs_g: nonNegativeInt,

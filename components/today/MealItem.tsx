@@ -1,5 +1,6 @@
 // components/today/MealItem.tsx
 import { View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Card } from '../ui/card';
 import { Text } from '../ui/text';
 import { Button } from '../ui/button';
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export function MealItem({ id, name, calories, protein_g, carbs_g, fat_g, onDelete }: Props) {
+  const router = useRouter();
   return (
     <Card className="mb-2">
       <View className="flex-row justify-between items-start">
@@ -24,6 +26,14 @@ export function MealItem({ id, name, calories, protein_g, carbs_g, fat_g, onDele
             {calories} kcal · {protein_g}p · {carbs_g}c · {fat_g}f
           </Text>
         </View>
+        <Button
+          variant="ghost"
+          size="sm"
+          onPress={() => router.push({ pathname: '/modals/edit-meal', params: { id } })}
+          accessibilityLabel={`Edit ${name}`}
+        >
+          Edit
+        </Button>
         <Button variant="ghost" size="sm" onPress={() => onDelete(id, name)}>
           Delete
         </Button>

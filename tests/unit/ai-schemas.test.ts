@@ -31,6 +31,22 @@ describe('MealExtractionSchema', () => {
     expect(result.protein_g).toBe(42);
   });
 
+  it('rejects blank names, negative fractions, nonfinite values, and amounts the database cannot store', () => {
+    const meal = {
+      name: 'Lunch',
+      calories: 400,
+      protein_g: 30,
+      carbs_g: 40,
+      fat_g: 12,
+      confidence: 'medium',
+    };
+    expect(MealExtractionSchema.safeParse({ ...meal, name: ' \t\n' }).success).toBe(false);
+    for (const calories of [-0.1, Number.NaN, Number.POSITIVE_INFINITY, 2_147_483_648]) {
+      expect(MealExtractionSchema.safeParse({ ...meal, calories }).success).toBe(false);
+    }
+    expect(MealExtractionSchema.parse({ ...meal, name: ' Lunch ' }).name).toBe('Lunch');
+  });
+
   it('rejects invalid confidence values', () => {
     const invalid = {
       name: 'X',

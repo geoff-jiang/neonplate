@@ -1,6 +1,6 @@
 # Personal V1 completion plan
 
-Updated: 2026-09-18. This document is the source of truth; it supersedes the historical plans in `docs/superpowers/`.
+Updated: 2026-10-06. This document is the source of truth; it supersedes the historical plans in `docs/superpowers/`.
 
 ## Goal and agreed decisions
 
@@ -20,15 +20,15 @@ Make NeonPlate reliable enough for daily personal use on iPad and iPhone:
 
 ## Current state
 
-The April implementation was on `origin/v1-implementation` at `6d27e41`; main originally held only plans. The September cleanup integrates that work, removes unused starter code, updates working agreements, and makes this plan authoritative. Stage 1 foundation changes are now implemented; stages 2–5 remain.
+The April implementation was on `origin/v1-implementation` at `6d27e41`; main originally held only plans. The September cleanup integrates that work, removes unused starter code, updates working agreements, and makes this plan authoritative. Stage 1 is merged. Stage 2 logging changes are implemented and pass automated checkpoint review; stages 3–5 remain.
 
 | Area | Evidence in code | Remaining work |
 | --- | --- | --- |
 | Foundation | Shared auth, callback handling, protected routes, compatible Expo packages, ownership migration/tests | Native build, live backend and real-device verification (deferred) |
-| Settings | Targets/key storage, errors/retry, cross-screen refresh | Input validation and final device verification |
+| Settings | Targets/key storage, errors/retry, cross-screen refresh | Final device verification |
 | Inventory | Categorized listing and add/remove | Persistent in-stock toggle, rename/category editing, failure feedback |
-| Meal logging | AI extraction, verification, saves/deletes, guarded submissions, synchronized totals | Manual entry, meal editing, re-parse draft correctness, validation and AI retries |
-| Voice | Speech hook and recorder connected to extraction | Physical-device permissions, lifecycle and transcription verification |
+| Meal logging | Manual/text/voice entry, editable verification, meal editing, guarded saves/deletes, synchronized totals, bounded AI retries | Final device/live-backend verification |
+| Voice | Speech hook with permission/cancellation guards, transcript retention and cleanup | Physical-device permissions, lifecycle and transcription verification |
 | Suggestions | Response schema and an unfinished navigation action | Suggestion prompt/request, screen, exclusions, selection and log flow |
 | Recipes / history | Tables and placeholder screens | Minimal usable views and reuse flow |
 | Verification | Automated auth/data/UI regressions and PostgreSQL ownership checks, typecheck, CI | Remaining-feature regression tests and final device/live-backend checks |
@@ -66,18 +66,29 @@ Work from main in a short-lived branch. Keep runtime fixes separate from the doc
 
 ## 2. Finish dependable logging
 
+**Implementation and automated review complete.** Physical-device and live-backend acceptance remain deferred until all stages are implemented.
+
 This makes the app useful before the suggestion feature is completed.
 
-- [ ] Add a manual-entry action that opens the same verification form without calling AI. Offer it after AI failure too. Decide an explicit manual source value and migrate the database check constraint/types if adding it.
-- [ ] Support editing existing meals from Today and later from History. Preserve their original date unless explicitly changed.
-- [ ] Validate nonempty names and finite, nonnegative macro values and sensible targets. Keep empty numeric input editable rather than immediately forcing zero.
-- [ ] Fix re-parse behavior: new extraction results currently do not reset the form's initial draft. Show parsing state and prevent overlapping saves/re-parses.
-- [ ] Explain that macros are estimates and display assumed quantities. Keep editable confirmation mandatory for AI and recipe logs.
-- [ ] Implement the intended bounded retry behavior for transient AI failures; JSON correction already exists. Separate missing key, account/request errors, network failures, and malformed output. Preserve entered text throughout.
+- [x] Add a manual-entry action that opens the same verification form without calling AI. Offer it after AI failure too. Decide an explicit manual source value and migrate the database check constraint/types if adding it.
+- [x] Support editing existing meals from Today and later from History. Preserve their original date unless explicitly changed.
+- [x] Validate nonempty names and finite, nonnegative macro values and sensible targets. Keep empty numeric input editable rather than immediately forcing zero.
+- [x] Fix re-parse behavior: new extraction results currently do not reset the form's initial draft. Show parsing state and prevent overlapping saves/re-parses.
+- [x] Explain that macros are estimates and display assumed quantities. Keep editable confirmation mandatory for AI and recipe logs.
+- [x] Implement the intended bounded retry behavior for transient AI failures; JSON correction already exists. Separate missing key, account/request errors, network failures, and malformed output. Preserve entered text throughout.
 - [ ] Verify voice on a physical device: permission allowed/denied, start/stop, editing transcript, leaving the screen while recording, retry, and correct source on save. Clean up recording on unmount.
-- [ ] Add focused regression tests for validation, extraction parsing, and date/totals behavior; manually exercise the full text/manual/voice flows.
+- [x] Add focused automated regression tests for validation, manual/edit routes, extraction parsing, retries, speech lifecycles, and date/provenance preservation.
+- [ ] Manually exercise the full text/manual/voice flows at final device/live-backend validation.
 
 **Implementation exit:** logging can be added, corrected, and deleted without AI; verify with automated tests and checkpoint review. The original two-to-three-day dogfood gate is deferred to final device validation per user.
+
+**Implementation evidence:** Manual entry uses the same editable form without an AI call or key; Today exposes owner-scoped editing that preserves the original timestamp, source, raw input, and recipe association. Numeric drafts retain empty input until validation; meals require a name and nonnegative whole-number nutrition, and calorie targets must be positive. Re-parse replaces the form draft and blocks overlapping operations. AI requests share a maximum of two HTTP attempts across transient retries and JSON correction, with deadlines covering response bodies and safe user-facing errors. Voice lifecycle guards preserve edited transcripts and cancel pending permissions/recording on background or unmount.
+
+**Migration:** `20261006222453_manual_logging_validation.sql` adds the manual source and validates future writes. Existing invalid nutrition/targets are preserved for explicit repair when edited rather than silently rewritten. No live database was modified.
+
+**Checkpoint review:** Three delegated tasks covered route regressions, AI/voice reliability, and independent review, followed by parent integration review. A stale decimal success test was corrected to match integer storage; review also caught and fixed a voice unmount/remount race using a shared recording guard that waits for the previous terminal event. No remaining Stage 2 code blockers were found.
+
+**Checkpoint checks (2026-10-06):** 152 tests pass across 17 files, including 22 PostgreSQL integration tests. Typecheck, lint, formatting, and the final iOS Metro/Hermes export pass. Native speech/permissions, installed-device interactions, Supabase Auth/PostgREST connectivity, and dogfooding remain unverified and deferred. The new migration must be applied to the selected backend before manual logging is used.
 
 ## 3. Make inventory persistent and useful
 
