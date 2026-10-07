@@ -2,7 +2,7 @@
 
 A personal iPad/iPhone food assistant: track ingredients, decide what to eat, and log meals against daily macro targets.
 
-**Status:** in development. Inventory, text/voice logging, and today's macro display exist; suggestions and history are unfinished. Stage 1 foundation fixes are implemented and pass automated review (86 tests); native/device validation is deferred until all five stages are implemented. See [the current plan](docs/PLAN.md) for the remaining work and release criteria.
+**Status:** in development. Inventory, text/voice logging, and today's macro display exist; suggestions and history are unfinished. Stage 1 foundation fixes are merged; Stage 2 adds manual entry, meal editing, validated targets, bounded AI retries, and speech lifecycle guards; native/device validation is deferred until all five stages are implemented. See [the current plan](docs/PLAN.md) for the remaining work and release criteria.
 
 ## Development
 
@@ -19,7 +19,9 @@ The repository is configured for local Supabase (`neonplate-v1`, PostgreSQL 17).
 
 Magic-link callbacks now handle cold and already-open app launches. The local redirect allowlist includes `neonplate://auth/callback` and the legacy `neonplate://` URL. If a hosted project is chosen later, add these exact URLs to its Auth redirect allowlist. Open the email link on the device with the development build installed. Password sign-in remains available until device verification is complete.
 
-Run new migrations against the selected backend before using the app. The ownership migration preserves existing logs while removing invalid cross-user recipe links and enforcing same-owner associations. No hosted migrations have been applied during implementation.
+Run new migrations against the selected backend before using the app. The ownership migration preserves existing logs while removing invalid cross-user recipe links and enforcing same-owner associations. The logging migration adds the `manual` source and input checks for future writes, preserving existing records for explicit repair. No hosted migrations have been applied during implementation.
+
+Manual entry is available from Log meal and after an AI failure; it needs no API key, but saving still needs the database. Today’s Edit action keeps the meal’s original date and source. Nutrition fields use whole numbers, matching the database; AI estimates and portion assumptions require your review before saving.
 
 ## Checks
 

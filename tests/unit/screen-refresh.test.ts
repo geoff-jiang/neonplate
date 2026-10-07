@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   reload: vi.fn(),
   remove: vi.fn(),
 }));
+vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('react-native', () => ({
   View: 'View',
   ScrollView: 'ScrollView',

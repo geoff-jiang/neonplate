@@ -1,5 +1,5 @@
 // app/modals/log-meal.tsx
-import { View, Alert, ActivityIndicator, Pressable } from 'react-native';
+import { View, ActivityIndicator, Pressable } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,10 +23,12 @@ export default function LogMeal() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('text');
   const [input, setInput] = useState('');
+  const [voiceInput, setVoiceInput] = useState('');
+  const [parseError, setParseError] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const [extraction, setExtraction] = useState<MealExtraction | null>(null);
   const [rawInput, setRawInput] = useState('');
-  const [source, setSource] = useState<'text' | 'voice'>('text');
+  const [source, setSource] = useState<'text' | 'voice' | 'manual'>('text');
   const { add } = useDailyLogs();
   const mounted = useRef(true);
   const inFlight = useRef<'parse' | 'save' | null>(null);
@@ -49,6 +51,9 @@ export default function LogMeal() {
     inFlight.current = 'parse';
     const combined = hint ? `${text}\n\nHint from user: ${hint}` : text;
     setParsing(true);
+    setParseError(null);
+    setRawInput(text);
+    setSource(tabSource);
     try {
       const result = await extractMeal(combined);
       if (!mounted.current) return;
@@ -57,35 +62,32 @@ export default function LogMeal() {
       setSource(tabSource);
     } catch (e) {
       if (!mounted.current) return;
-      if (e instanceof AIError) handleAIError(e);
-      else Alert.alert('Failed to parse', String(e));
+      setParseError(
+        e instanceof AIError
+          ? e.message
+          : 'Unable to estimate this meal. Try again or enter it manually.',
+      );
     } finally {
       inFlight.current = null;
       if (mounted.current) setParsing(false);
     }
   }
 
-  function handleAIError(e: AIError) {
-    switch (e.kind) {
-      case 'no_key':
-        Alert.alert('API key missing', 'Add your OpenRouter key in Settings.');
-        break;
-      case 'network':
-        Alert.alert('No connection', 'Check your network and try again.');
-        break;
-      case 'timeout':
-        Alert.alert('AI is slow', 'Request timed out. Try again.');
-        break;
-      case 'http_4xx':
-        Alert.alert('AI unavailable', `Check your API key.\n\n${e.message}`);
-        break;
-      case 'http_5xx':
-        Alert.alert('OpenRouter is having issues', 'Try again in a moment.');
-        break;
-      case 'invalid_json':
-        Alert.alert('AI returned unexpected format', 'Try rephrasing your meal.');
-        break;
-    }
+  function enterManually() {
+    if (inFlight.current || !mounted.current) return;
+    const text = tab === 'voice' ? voiceInput : input;
+    setRawInput(text);
+    setSource('manual');
+    setParseError(null);
+    setExtraction({
+      name: text.trim(),
+      calories: 0,
+      protein_g: 0,
+      carbs_g: 0,
+      fat_g: 0,
+      confidence: 'low',
+      notes: '',
+    });
   }
 
   async function handleConfirm(result: VerificationResult) {
@@ -115,11 +117,15 @@ export default function LogMeal() {
   if (extraction) {
     return (
       <SafeAreaView className="flex-1 bg-background">
+        {parseError ? <Text className="text-destructive px-6 pt-4">{parseError}</Text> : null}
         <VerificationScreen
+          mode={source === 'manual' ? 'manual' : 'ai'}
           extraction={extraction}
           rawInput={rawInput}
           onConfirm={handleConfirm}
-          onReparse={(hint) => handleParse(rawInput, source, hint)}
+          onReparse={
+            source === 'manual' ? undefined : (hint) => handleParse(rawInput, source, hint)
+          }
           onCancel={() => {
             if (!inFlight.current && mounted.current) setExtraction(null);
           }}
@@ -195,8 +201,20 @@ export default function LogMeal() {
             </Button>
           </View>
         ) : (
-          <VoiceRecorder onParse={(text) => handleParse(text, 'voice')} parsing={parsing} />
+          <VoiceRecorder
+            onParse={(text) => handleParse(text, 'voice')}
+            parsing={parsing}
+            initialTranscript={voiceInput}
+            onTranscriptChange={setVoiceInput}
+          />
         )}
+        {parseError ? <Text className="text-destructive mt-4">{parseError}</Text> : null}
+        <Button variant="outline" className="mt-4" onPress={enterManually} disabled={parsing}>
+          Enter manually
+        </Button>
+        <Text variant="caption" className="mt-2">
+          Enter your own nutrition values without an AI key. Saving requires a connection.
+        </Text>
       </View>
     </SafeAreaView>
   );

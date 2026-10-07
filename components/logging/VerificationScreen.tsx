@@ -7,16 +7,16 @@ import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import type { MealExtraction } from '../../lib/ai/schemas';
 
-export type VerificationResult = {
-  name: string;
-  calories: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-};
+import {
+  mealToDraft,
+  parseMealDraft,
+  type VerificationResult,
+} from '../../lib/utils/meal-validation';
+export type { VerificationResult } from '../../lib/utils/meal-validation';
 
 type Props = {
   extraction: MealExtraction;
+  mode?: 'ai' | 'manual' | 'edit';
   rawInput?: string;
   onConfirm: (result: VerificationResult) => Promise<void>;
   onReparse?: (hint?: string) => Promise<void>;
@@ -25,18 +25,14 @@ type Props = {
 
 export function VerificationScreen({
   extraction,
+  mode = 'ai',
   rawInput,
   onConfirm,
   onReparse,
   onCancel,
 }: Props) {
-  const [draft, setDraft] = useState<VerificationResult>({
-    name: extraction.name,
-    calories: extraction.calories,
-    protein_g: extraction.protein_g,
-    carbs_g: extraction.carbs_g,
-    fat_g: extraction.fat_g,
-  });
+  const [draft, setDraft] = useState(() => mealToDraft(extraction, mode === 'manual'));
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [hint, setHint] = useState('');
   const [reparsing, setReparsing] = useState(false);
@@ -51,14 +47,19 @@ export function VerificationScreen({
     };
   }, []);
 
+  useEffect(() => {
+    setDraft(mealToDraft(extraction, mode === 'manual'));
+    setValidationError(null);
+  }, [extraction, mode]);
+
   function intField(field: keyof Omit<VerificationResult, 'name'>) {
     return {
-      value: String(draft[field]),
+      value: draft[field],
       editable: !busy,
       onChangeText: (v: string) => {
         if (inFlight.current) return;
-        const n = parseInt(v, 10);
-        setDraft((d) => ({ ...d, [field]: Number.isFinite(n) ? n : 0 }));
+        setDraft((d) => ({ ...d, [field]: v }));
+        setValidationError(null);
       },
       keyboardType: 'number-pad' as const,
     };
@@ -66,10 +67,18 @@ export function VerificationScreen({
 
   async function handleSave() {
     if (inFlight.current || !mounted.current) return;
+    let result: VerificationResult;
+    try {
+      result = parseMealDraft(draft);
+    } catch (error) {
+      setValidationError(error instanceof Error ? error.message : 'Check your meal details.');
+      return;
+    }
+    setValidationError(null);
     inFlight.current = true;
     setSaving(true);
     try {
-      await onConfirm(draft);
+      await onConfirm(result);
     } catch (e) {
       if (mounted.current) Alert.alert('Save failed', String(e));
     } finally {
@@ -105,7 +114,14 @@ export function VerificationScreen({
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 gap-4">
-      <Text variant="h2">Verify meal</Text>
+      <Text variant="h2">
+        {mode === 'manual' ? 'Add meal manually' : mode === 'edit' ? 'Edit meal' : 'Verify meal'}
+      </Text>
+      <Text variant="muted">
+        {mode === 'ai'
+          ? 'AI nutrition is an estimate. Check the assumed portions and adjust the numbers for what you ate before saving.'
+          : 'Enter the amounts for the portion you ate. Use whole numbers; enter 0 when there is none.'}
+      </Text>
 
       {rawInput ? (
         <Card>
@@ -114,12 +130,18 @@ export function VerificationScreen({
         </Card>
       ) : null}
 
-      <View>
-        <Text variant="label">
-          Confidence: <Text className={confidenceColor}>{extraction.confidence}</Text>
-        </Text>
-        {extraction.notes ? <Text variant="caption">{extraction.notes}</Text> : null}
-      </View>
+      {mode === 'ai' && (
+        <View>
+          <Text variant="label">
+            AI confidence: <Text className={confidenceColor}>{extraction.confidence}</Text>
+          </Text>
+          <Text variant="label">Assumed portions and notes</Text>
+          <Text variant="caption">
+            {extraction.notes ||
+              'No portion assumptions were provided. Check the amounts before saving.'}
+          </Text>
+        </View>
+      )}
 
       <View>
         <Text variant="label">Meal name</Text>
@@ -127,7 +149,10 @@ export function VerificationScreen({
           value={draft.name}
           editable={!busy}
           onChangeText={(v) => {
-            if (!inFlight.current) setDraft((d) => ({ ...d, name: v }));
+            if (!inFlight.current) {
+              setDraft((d) => ({ ...d, name: v }));
+              setValidationError(null);
+            }
           }}
         />
       </View>
@@ -154,7 +179,7 @@ export function VerificationScreen({
         </View>
       </View>
 
-      {onReparse ? (
+      {onReparse && mode === 'ai' ? (
         <View>
           <Text variant="label">Re-parse with hint</Text>
           <Input
@@ -170,6 +195,12 @@ export function VerificationScreen({
           </Button>
         </View>
       ) : null}
+
+      {validationError && (
+        <Text accessibilityRole="alert" className="text-destructive">
+          {validationError}
+        </Text>
+      )}
 
       <View className="flex-row gap-3 mt-4">
         <Button variant="outline" className="flex-1" onPress={handleCancel} disabled={busy}>

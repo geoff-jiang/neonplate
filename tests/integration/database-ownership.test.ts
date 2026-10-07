@@ -69,7 +69,7 @@ describe('database ownership (actual PostgreSQL RLS)', () => {
   }
 
   // SQL errors abort a transaction; isolate expected denials in savepoints.
-  async function denied(sql: string, params: string[], code: string) {
+  async function denied(sql: string, params: unknown[], code: string) {
     await db.exec('savepoint denied_operation');
     try {
       await expect(db.query(sql, params)).rejects.toMatchObject({ code });
@@ -208,6 +208,74 @@ describe('database ownership (actual PostgreSQL RLS)', () => {
     ]);
   });
 
+  it('saves manual meals and preserves provenance/date when their nutrition is edited', async () => {
+    await asUser(alice);
+    const inserted = await db.query<Tables<'daily_logs'>>(
+      "insert into public.daily_logs (user_id, name, calories, source, logged_at) values ($1, 'Manual lunch', 400, 'manual', $2) returning *",
+      [alice, '2026-09-17T12:30:00Z'],
+    );
+    const original = inserted.rows[0];
+    const edited = await db.query<Tables<'daily_logs'>>(
+      "update public.daily_logs set name = 'Corrected lunch', calories = 500 where id = $1 returning *",
+      [original.id],
+    );
+    expect(edited.rows[0]).toEqual({ ...original, name: 'Corrected lunch', calories: 500 });
+  });
+
+  it('rejects empty names and negative meal nutrition on both insert and update', async () => {
+    await asUser(alice);
+    for (const name of ['', '  ', '\t\n']) {
+      await denied(
+        "insert into public.daily_logs (user_id, name, source) values ($1, $2, 'manual')",
+        [alice, name],
+        '23514',
+      );
+      await denied(
+        'update public.daily_logs set name = $1 where user_id = $2',
+        [name, alice],
+        '23514',
+      );
+    }
+    for (const field of ['calories', 'protein_g', 'carbs_g', 'fat_g']) {
+      await denied(
+        `insert into public.daily_logs (user_id, name, source, ${field}) values ($1, 'Lunch', 'manual', -1)`,
+        [alice],
+        '23514',
+      );
+      await denied(
+        `update public.daily_logs set ${field} = -1 where user_id = $1`,
+        [alice],
+        '23514',
+      );
+    }
+    await denied(
+      "insert into public.daily_logs (user_id, name, source) values ($1, 'Lunch', 'unknown')",
+      [alice],
+      '23514',
+    );
+  });
+
+  it('rejects invalid macro targets while allowing zero gram targets', async () => {
+    await asUser(alice);
+    for (const field of ['daily_calories', 'daily_protein_g', 'daily_carbs_g', 'daily_fat_g']) {
+      await denied(
+        `update public.user_settings set ${field} = -1 where user_id = $1`,
+        [alice],
+        '23514',
+      );
+    }
+    await denied(
+      'update public.user_settings set daily_calories = 0 where user_id = $1',
+      [alice],
+      '23514',
+    );
+    const saved = await db.query(
+      'update public.user_settings set daily_protein_g = 0, daily_carbs_g = 0, daily_fat_g = 0 where user_id = $1 returning daily_calories',
+      [alice],
+    );
+    expect(saved.rows).toEqual([{ daily_calories: 2000 }]);
+  });
+
   it('keeps the signup trigger working without exposing its definer function', async () => {
     await asUser(alice);
     expect((await db.query('select daily_calories from public.user_settings')).rows).toEqual([
@@ -243,6 +311,62 @@ it('upgrades existing cross-owner links without deleting logs or changing valid 
           (await db.query('select recipe_id from public.daily_logs where user_id = $1', [bob]))
             .rows,
         ).toEqual([{ recipe_id: bobRecipe }]);
+      } else {
+        await db.exec(migration.sql);
+      }
+    }
+  } finally {
+    await db.close();
+  }
+}, 30_000);
+
+it('preserves legacy invalid nutrition during upgrade and lets the owner repair it', async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(bootstrap);
+    for (const migration of migrations) {
+      if (migration.name.endsWith('_manual_logging_validation.sql')) {
+        await db.exec(fixtures);
+        await db.query(
+          "update public.daily_logs set calories = -1, name = '  ' where user_id = $1",
+          [alice],
+        );
+        await db.query('update public.user_settings set daily_calories = 0 where user_id = $1', [
+          alice,
+        ]);
+        await db.exec(migration.sql);
+        expect(
+          (
+            await db.query('select name, calories from public.daily_logs where user_id = $1', [
+              alice,
+            ])
+          ).rows,
+        ).toEqual([{ name: '  ', calories: -1 }]);
+        expect(
+          (
+            await db.query('select daily_calories from public.user_settings where user_id = $1', [
+              alice,
+            ])
+          ).rows,
+        ).toEqual([{ daily_calories: 0 }]);
+        await db.exec('set role authenticated');
+        await db.query("select set_config('request.jwt.claim.sub', $1, false)", [alice]);
+        expect(
+          (
+            await db.query(
+              "update public.daily_logs set name = 'Repaired meal', calories = 450 where user_id = $1 returning name, calories",
+              [alice],
+            )
+          ).rows,
+        ).toEqual([{ name: 'Repaired meal', calories: 450 }]);
+        expect(
+          (
+            await db.query(
+              'update public.user_settings set daily_calories = 2000 where user_id = $1 returning daily_calories',
+              [alice],
+            )
+          ).rows,
+        ).toEqual([{ daily_calories: 2000 }]);
       } else {
         await db.exec(migration.sql);
       }

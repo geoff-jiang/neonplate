@@ -20,6 +20,10 @@ function RootNavigator() {
           name="modals/log-meal"
           options={{ presentation: 'modal', gestureEnabled: false }}
         />
+        <Stack.Screen
+          name="modals/edit-meal"
+          options={{ presentation: 'modal', gestureEnabled: false }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)" />

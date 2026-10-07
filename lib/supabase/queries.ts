@@ -43,6 +43,17 @@ export type DailyLog = Database['public']['Tables']['daily_logs']['Row'];
 export type DailyLogInsert = Database['public']['Tables']['daily_logs']['Insert'];
 
 export const dailyLogQueries = {
+  async getById(userId: string, id: string): Promise<DailyLog | null> {
+    const { data, error } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
   async listForDay(userId: string, startISO: string, endISO: string): Promise<DailyLog[]> {
     const { data, error } = await supabase
       .from('daily_logs')
