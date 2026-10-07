@@ -1,4 +1,5 @@
 import { useDailyLogs } from '../../hooks/use-daily-logs';
+import { useInventory } from '../../hooks/use-inventory';
 import { useSettings } from '../../hooks/use-settings';
 import { createElement } from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -11,6 +12,11 @@ const mocks = vi.hoisted(() => ({
   insertLog: vi.fn(),
   updateLog: vi.fn(),
   removeLog: vi.fn(),
+  listInventory: vi.fn(),
+  addInventory: vi.fn(),
+  updateInventory: vi.fn(),
+  stockInventory: vi.fn(),
+  removeInventory: vi.fn(),
   getSettings: vi.fn(),
   saveSettings: vi.fn(),
 }));
@@ -29,6 +35,13 @@ vi.mock('../../lib/supabase/queries', () => ({
     insert: mocks.insertLog,
     update: mocks.updateLog,
     remove: mocks.removeLog,
+  },
+  inventoryQueries: {
+    listAll: mocks.listInventory,
+    add: mocks.addInventory,
+    update: mocks.updateInventory,
+    setStock: mocks.stockInventory,
+    remove: mocks.removeInventory,
   },
   settingsQueries: { get: mocks.getSettings, save: mocks.saveSettings },
 }));
@@ -73,6 +86,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.user = { id: 'alice' };
   mocks.listLogs.mockResolvedValue([]);
+  mocks.listInventory.mockResolvedValue([]);
   mocks.getSettings.mockResolvedValue(targets);
   mocks.saveSettings.mockResolvedValue(undefined);
 });
@@ -264,5 +278,53 @@ describe('settings lifecycle', () => {
     });
     expect(hook.current.settings).toEqual(targets);
     expect(hook.current.error).toBeNull();
+  });
+});
+
+describe('inventory lifecycle', () => {
+  it('refreshes all inventory readers after restocking and exposes only available names', async () => {
+    const first = await renderHook(() => useInventory());
+    const second = await renderHook(() => useInventory());
+    const stocked = { id: 'eggs', name: 'Eggs', in_stock: true };
+    mocks.stockInventory.mockResolvedValue(stocked);
+    mocks.listInventory.mockResolvedValue([stocked, { id: 'milk', name: 'Milk', in_stock: false }]);
+    await act(async () => {
+      await first.current.setStock('eggs', true);
+    });
+    expect(mocks.stockInventory).toHaveBeenCalledWith('eggs', true, 'alice');
+    expect(second.current.availableNames).toEqual(['Eggs']);
+    expect(second.current.items).toHaveLength(2);
+    mocks.user = null;
+    await second.rerender();
+    expect(second.current.availableNames).toEqual([]);
+  });
+  it('retains loaded inventory after a failed toggle and sends edits with the owner', async () => {
+    const item = { id: 'eggs', name: 'Eggs', in_stock: true };
+    mocks.listInventory.mockResolvedValue([item]);
+    const hook = await renderHook(() => useInventory());
+    mocks.stockInventory.mockRejectedValue(new Error('Connection lost'));
+    await act(async () => {
+      await expect(hook.current.setStock('eggs', false)).rejects.toThrow('Connection lost');
+    });
+    expect(hook.current.items).toEqual([item]);
+    expect(hook.current.error?.message).toBe('Connection lost');
+    mocks.updateInventory.mockResolvedValue(item);
+    await act(async () => {
+      await hook.current.update('eggs', { name: 'Eggs', category: 'protein' });
+    });
+    expect(mocks.updateInventory).toHaveBeenCalledWith(
+      'eggs',
+      { name: 'Eggs', category: 'protein' },
+      'alice',
+    );
+    expect(hook.current.error).toBeNull();
+    const renamed = { ...item, name: 'Duck eggs', in_stock: false };
+    mocks.listInventory.mockResolvedValue([renamed]);
+    mocks.updateInventory.mockResolvedValue(renamed);
+    await act(async () => {
+      await hook.current.update('eggs', { name: 'Duck eggs', category: 'protein' });
+    });
+    expect(hook.current.items).toEqual([renamed]);
+    expect(hook.current.availableNames).toEqual([]);
   });
 });

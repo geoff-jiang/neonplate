@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('react-native', () => ({
   View: 'View',
+  Switch: 'Switch',
   ScrollView: 'ScrollView',
   ActivityIndicator: 'progress',
   Alert: { alert: vi.fn() },
@@ -61,6 +62,7 @@ const ingredient: InventoryItem = {
   id: 'ingredient',
   user_id: 'user',
   name: 'Rice',
+  in_stock: true,
   category: 'staple',
   created_at: '2026-09-18T12:00:00Z',
 };
@@ -80,7 +82,7 @@ const cases = [
     hook: mocks.inventory,
     dataKey: 'items',
     loaded: [ingredient],
-    action: 'Remove',
+    action: 'Delete',
     empty: 'Your pantry is empty.',
   },
 ];
@@ -128,6 +130,9 @@ for (const isTablet of [false, true]) {
           reload: mocks.reload,
           remove: mocks.remove,
           add: vi.fn(),
+          update: vi.fn(),
+          setStock: vi.fn(),
+          availableNames: [],
         };
         scenario.hook.mockImplementation(() => state);
         const screen = await renderScreen(scenario.Screen);
@@ -177,6 +182,9 @@ for (const isTablet of [false, true]) {
           reload: mocks.reload,
           remove: mocks.remove,
           add: vi.fn(),
+          update: vi.fn(),
+          setStock: vi.fn(),
+          availableNames: [],
         };
         scenario.hook.mockImplementation(() => state);
         const screen = await renderScreen(scenario.Screen);

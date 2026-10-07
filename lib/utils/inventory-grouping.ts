@@ -25,8 +25,13 @@ export function groupByCategory(items: InventoryItem[]): InventoryGroup[] {
   for (const cat of CATEGORY_ORDER) {
     const items = buckets.get(cat)!;
     if (items.length === 0) continue;
-    items.sort((a, b) => a.name.localeCompare(b.name));
+    items.sort((a, b) => Number(b.in_stock) - Number(a.in_stock) || a.name.localeCompare(b.name));
     result.push({ category: cat, items });
   }
   return result;
+}
+
+// Pantry basics are a separate, explicit assumption; this list contains owned stock only.
+export function getAvailableIngredientNames(items: InventoryItem[]): string[] {
+  return items.filter((item) => item.in_stock).map((item) => item.name);
 }
