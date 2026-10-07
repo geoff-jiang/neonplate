@@ -20,9 +20,11 @@ type Props = {
   groups: Group[];
   onRemove: (id: string) => Promise<void>;
   isTablet: boolean;
+  onSetStock: (id: string, inStock: boolean) => Promise<unknown>;
+  onEdit: (item: InventoryItem) => void;
 };
 
-export function InventoryList({ groups, onRemove, isTablet }: Props) {
+export function InventoryList({ groups, onRemove, isTablet, onSetStock, onEdit }: Props) {
   if (isTablet) {
     return (
       <ScrollView className="flex-1 px-6">
@@ -33,7 +35,13 @@ export function InventoryList({ groups, onRemove, isTablet }: Props) {
                 {CATEGORY_LABELS[group.category]}
               </Text>
               {group.items.map((item) => (
-                <InventoryRow key={item.id} item={item} onRemove={onRemove} />
+                <InventoryRow
+                  key={item.id}
+                  item={item}
+                  onRemove={onRemove}
+                  onSetStock={onSetStock}
+                  onEdit={onEdit}
+                />
               ))}
             </View>
           ))}
@@ -50,7 +58,13 @@ export function InventoryList({ groups, onRemove, isTablet }: Props) {
             {CATEGORY_LABELS[group.category]}
           </Text>
           {group.items.map((item) => (
-            <InventoryRow key={item.id} item={item} onRemove={onRemove} />
+            <InventoryRow
+              key={item.id}
+              item={item}
+              onRemove={onRemove}
+              onSetStock={onSetStock}
+              onEdit={onEdit}
+            />
           ))}
         </View>
       ))}

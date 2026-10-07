@@ -20,13 +20,13 @@ Make NeonPlate reliable enough for daily personal use on iPad and iPhone:
 
 ## Current state
 
-The April implementation was on `origin/v1-implementation` at `6d27e41`; main originally held only plans. The September cleanup integrates that work, removes unused starter code, updates working agreements, and makes this plan authoritative. Stage 1 is merged. Stage 2 logging changes are implemented and pass automated checkpoint review; stages 3–5 remain.
+The April implementation was on `origin/v1-implementation` at `6d27e41`; main originally held only plans. The September cleanup integrates that work, removes unused starter code, updates working agreements, and makes this plan authoritative. Stages 1 and 2 are merged. Stage 3 inventory changes are implemented and pass automated checkpoint review; stages 4–5 remain.
 
 | Area | Evidence in code | Remaining work |
 | --- | --- | --- |
 | Foundation | Shared auth, callback handling, protected routes, compatible Expo packages, ownership migration/tests | Native build, live backend and real-device verification (deferred) |
 | Settings | Targets/key storage, errors/retry, cross-screen refresh | Final device verification |
-| Inventory | Categorized listing and add/remove | Persistent in-stock toggle, rename/category editing, failure feedback |
+| Inventory | Persistent stock toggle, categorized stock-first listing, add/edit/delete, recoverable failure feedback | Final device/live-backend verification |
 | Meal logging | Manual/text/voice entry, editable verification, meal editing, guarded saves/deletes, synchronized totals, bounded AI retries | Final device/live-backend verification |
 | Voice | Speech hook with permission/cancellation guards, transcript retention and cleanup | Physical-device permissions, lifecycle and transcription verification |
 | Suggestions | Response schema and an unfinished navigation action | Suggestion prompt/request, screen, exclusions, selection and log flow |
@@ -92,13 +92,24 @@ This makes the app useful before the suggestion feature is completed.
 
 ## 3. Make inventory persistent and useful
 
-- [ ] Add `in_stock boolean not null default true` through a new migration; regenerate database types. Preserve existing entries.
-- [ ] Toggle in/out of stock, edit names/categories, and retain a separate permanent delete action. Keep case-insensitive per-user uniqueness and normalize whitespace.
-- [ ] Show in-stock items first, with out-of-stock items still easy to find and restore. Keep category grouping; avoid advanced filtering until needed.
-- [ ] Ensure failed changes visibly revert or offer retry. Test toggling, duplicates, edits, and access isolation.
-- [ ] Expose only in-stock names to suggestions. Make assumed pantry basics explicit rather than silently treating all stored inventory as available.
+**Implementation and automated review complete.** Native/device and live-backend validation remain deferred.
 
-**Exit:** run out of an item, restock it with one toggle, restart the app, and see the correct availability without retyping it.
+- [x] Add `in_stock boolean not null default true` through a new migration; preserve existing entries. Align database types with the schema verified by PostgreSQL introspection.
+- [ ] Regenerate database types against the selected backend at final validation. The CLI generation attempt was blocked by missing Docker/Podman; the three stock type fields were updated manually, not generated.
+- [x] Toggle in/out of stock, edit names/categories, and retain a separate permanent delete action. Keep case-insensitive per-user uniqueness and normalize whitespace on new/edit writes.
+- [x] Show in-stock items first within category groups, with out-of-stock items still available to restore. Avoid advanced filtering.
+- [x] Keep displayed stock unchanged on failed writes and offer retry with feedback. Preserve failed edit drafts. Test toggling, duplicates, edits, and access isolation.
+- [x] Expose only in-stock names to suggestions through `availableNames`; disclose assumed pantry basics in the inventory screen. The suggestion request itself belongs to Stage 4.
+
+**Implementation evidence:** The shared add/edit form retains drafts after errors and prevents overlapping submissions. Stock switches wait for persisted refresh rather than keeping an optimistic state after failure. Owner-scoped update queries patch only the intended fields; editing names/categories leaves stock, ownership, IDs, and creation timestamps intact. Successful mutations refresh all mounted inventory readers; sign-out clears availability. Category grouping keeps stocked items first without changing the fetched array.
+
+**Migration:** `20261007041143_inventory_stock.sql` adds the non-null stock field with a true default and preserves existing entries, metadata, RLS, and the existing per-user `lower(name)` unique index. Legacy names are not rewritten or merged; old whitespace aliases can still coexist. New/edit writes trim and collapse whitespace. Stage 4 ingredient matching should normalize names when comparing inventory with AI output.
+
+**Checkpoint review:** Three delegated tasks implemented UI, query/hook behavior, and database changes, with independent cross-reviews and parent review. Findings resolved include StrictMode effect cleanup leaving mounted guards false, legacy uncategorized edits defaulting to Protein instead of Other, and an old migration-upgrade test retaining the simulated client role before subsequent schema changes.
+
+**Checkpoint checks (2026-10-06):** 171 tests pass across 19 files, including 27 PostgreSQL integration tests. Node 22.23.3 and pnpm 9.15.9 were used for the final typecheck, lint, formatting, unit/integration run, and iOS Metro/Hermes export; all pass. Parent review and independent cross-reviews found no remaining Stage 3 code blockers. No native app was installed or live database migrated.
+
+**Exit (deferred device acceptance):** Run out of an item, restock it with one toggle, restart the installed app, and see the correct availability without retyping it.
 
 ## 4. Build the smallest complete suggestion loop
 

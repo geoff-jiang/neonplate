@@ -83,6 +83,7 @@ export type Database = {
           category: string | null;
           created_at: string;
           id: string;
+          in_stock: boolean;
           name: string;
           user_id: string;
         };
@@ -90,6 +91,7 @@ export type Database = {
           category?: string | null;
           created_at?: string;
           id?: string;
+          in_stock?: boolean;
           name: string;
           user_id: string;
         };
@@ -97,6 +99,7 @@ export type Database = {
           category?: string | null;
           created_at?: string;
           id?: string;
+          in_stock?: boolean;
           name?: string;
           user_id?: string;
         };

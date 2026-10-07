@@ -276,6 +276,94 @@ describe('database ownership (actual PostgreSQL RLS)', () => {
     expect(saved.rows).toEqual([{ daily_calories: 2000 }]);
   });
 
+  it('defaults inventory to in stock and preserves item identity across stock toggles and edits', async () => {
+    await asUser(alice);
+    const original = (
+      await db.query<Tables<'inventory_items'>>('select * from public.inventory_items')
+    ).rows[0];
+    expect(original.in_stock).toBe(true);
+    const out = await db.query<Tables<'inventory_items'>>(
+      'update public.inventory_items set in_stock = false where id = $1 returning *',
+      [original.id],
+    );
+    expect(out.rows[0]).toEqual({ ...original, in_stock: false });
+    const edited = await db.query<Tables<'inventory_items'>>(
+      "update public.inventory_items set name = 'Green apple', category = 'Produce' where id = $1 returning *",
+      [original.id],
+    );
+    expect(edited.rows[0]).toEqual({
+      ...original,
+      name: 'Green apple',
+      category: 'Produce',
+      in_stock: false,
+    });
+    const restored = await db.query<Tables<'inventory_items'>>(
+      'update public.inventory_items set in_stock = true where id = $1 returning *',
+      [original.id],
+    );
+    expect(restored.rows[0]).toEqual({ ...edited.rows[0], in_stock: true });
+    await denied(
+      'update public.inventory_items set in_stock = null where id = $1',
+      [original.id],
+      '23502',
+    );
+  });
+
+  it('keeps case-insensitive per-user inventory uniqueness even when an item is out of stock', async () => {
+    await asUser(alice);
+    await db.query('update public.inventory_items set in_stock = false');
+    await denied(
+      "insert into public.inventory_items (user_id, name) values ($1, 'APPLE')",
+      [alice],
+      '23505',
+    );
+    const second = await db.query<Tables<'inventory_items'>>(
+      "insert into public.inventory_items (user_id, name, in_stock) values ($1, 'Pear', false) returning *",
+      [alice],
+    );
+    expect(second.rows[0].in_stock).toBe(false);
+    await denied(
+      "update public.inventory_items set name = 'apple' where id = $1",
+      [second.rows[0].id],
+      '23505',
+    );
+    await asUser(bob);
+    expect(
+      (
+        await db.query(
+          "insert into public.inventory_items (user_id, name) values ($1, 'APPLE') returning in_stock",
+          [bob],
+        )
+      ).rows,
+    ).toEqual([{ in_stock: true }]);
+  });
+
+  it('prevents changing another owner’s inventory stock or metadata', async () => {
+    await asUser(alice);
+    expect(
+      (
+        await db.query(
+          "update public.inventory_items set in_stock = false, name = 'Stolen beans' where user_id = $1 returning id",
+          [bob],
+        )
+      ).rows,
+    ).toEqual([]);
+    await asUser(bob);
+    expect((await db.query('select name, in_stock from public.inventory_items')).rows).toEqual([
+      { name: 'Beans', in_stock: true },
+    ]);
+  });
+
+  it('matches the stock column type, nullability, and insert default in PostgreSQL', async () => {
+    expect(
+      (
+        await db.query(
+          "select data_type, is_nullable, column_default from information_schema.columns where table_schema = 'public' and table_name = 'inventory_items' and column_name = 'in_stock'",
+        )
+      ).rows,
+    ).toEqual([{ data_type: 'boolean', is_nullable: 'NO', column_default: 'true' }]);
+  });
+
   it('keeps the signup trigger working without exposing its definer function', async () => {
     await asUser(alice);
     expect((await db.query('select daily_calories from public.user_settings')).rows).toEqual([
@@ -367,6 +455,36 @@ it('preserves legacy invalid nutrition during upgrade and lets the owner repair 
             )
           ).rows,
         ).toEqual([{ daily_calories: 2000 }]);
+        // Later migrations run as the schema owner, not the simulated client.
+        await db.exec('reset role');
+      } else {
+        await db.exec(migration.sql);
+      }
+    }
+  } finally {
+    await db.close();
+  }
+}, 30_000);
+
+it('upgrades legacy inventory without rewriting whitespace collisions or metadata', async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(bootstrap);
+    for (const migration of migrations) {
+      if (migration.name.endsWith('_inventory_stock.sql')) {
+        await db.exec(fixtures);
+        await db.query(
+          "insert into public.inventory_items (user_id, name, category, created_at) values ($1, '  Apple  ', 'Legacy', '2026-01-01T00:00:00Z')",
+          [alice],
+        );
+        const before = (
+          await db.query<Omit<Tables<'inventory_items'>, 'in_stock'>>(
+            'select * from public.inventory_items order by id',
+          )
+        ).rows;
+        await db.exec(migration.sql);
+        const after = (await db.query('select * from public.inventory_items order by id')).rows;
+        expect(after).toEqual(before.map((row) => ({ ...row, in_stock: true })));
       } else {
         await db.exec(migration.sql);
       }

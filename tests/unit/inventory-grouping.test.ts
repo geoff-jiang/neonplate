@@ -1,14 +1,19 @@
 // tests/unit/inventory-grouping.test.ts
 import { describe, it, expect } from 'vitest';
-import { groupByCategory, CATEGORY_ORDER } from '../../lib/utils/inventory-grouping';
+import {
+  groupByCategory,
+  CATEGORY_ORDER,
+  getAvailableIngredientNames,
+} from '../../lib/utils/inventory-grouping';
 import type { InventoryItem } from '../../lib/supabase/queries';
 
-function item(name: string, category: string | null): InventoryItem {
+function item(name: string, category: string | null, inStock = true): InventoryItem {
   return {
     id: name,
     user_id: 'u',
     name,
     category,
+    in_stock: inStock,
     created_at: new Date().toISOString(),
   };
 }
@@ -43,6 +48,21 @@ describe('groupByCategory', () => {
     const items = [item('Zucchini', 'produce'), item('Apple', 'produce')];
     const groups = groupByCategory(items);
     expect(groups[0].items.map((i) => i.name)).toEqual(['Apple', 'Zucchini']);
+  });
+
+  it('keeps out-of-stock items but sorts available items before them without mutating the input', () => {
+    const items = [
+      item('Apple', 'produce', false),
+      item('Zucchini', 'produce'),
+      item('Broccoli', 'produce'),
+    ];
+    expect(groupByCategory(items)[0].items.map((i) => i.name)).toEqual([
+      'Broccoli',
+      'Zucchini',
+      'Apple',
+    ]);
+    expect(items.map((i) => i.name)).toEqual(['Apple', 'Zucchini', 'Broccoli']);
+    expect(getAvailableIngredientNames(items)).toEqual(['Zucchini', 'Broccoli']);
   });
 
   it('exposes CATEGORY_ORDER constant', () => {

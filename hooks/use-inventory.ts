@@ -1,7 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { inventoryQueries, InventoryItem } from '../lib/supabase/queries';
 import { useAuth } from './use-auth';
 import { useUserResource } from './use-user-resource';
+
+import { getAvailableIngredientNames } from '../lib/utils/inventory-grouping';
 
 const EMPTY_ITEMS: InventoryItem[] = [];
 
@@ -21,5 +23,16 @@ export function useInventory() {
     (id: string) => mutate((userId) => inventoryQueries.remove(id, userId)),
     [mutate],
   );
-  return { items, ...state, add, remove };
+  const update = useCallback(
+    (id: string, patch: { name: string; category: string | null }) =>
+      mutate((userId) => inventoryQueries.update(id, patch, userId)),
+    [mutate],
+  );
+  const setStock = useCallback(
+    (id: string, inStock: boolean) =>
+      mutate((userId) => inventoryQueries.setStock(id, inStock, userId)),
+    [mutate],
+  );
+  const availableNames = useMemo(() => getAvailableIngredientNames(items), [items]);
+  return { items, availableNames, ...state, add, update, setStock, remove };
 }
